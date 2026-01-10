@@ -34,7 +34,7 @@ class TRC20Provider(PaymentProvider):
     # TronGrid API
     TRONGRID_API = "https://api.trongrid.io"
     # USDT TRC20 合约地址
-    USDT_CONTRACT = "TBnHw685ypdyFd6PnnRZ5uKk1WDHqFMD9L"
+    USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
 
     def __init__(self, config: dict[str, Any]):
         super().__init__(config)
@@ -351,3 +351,94 @@ class TRC20Provider(PaymentProvider):
                 "tx_id": tx_id,
                 "error": str(e),
             })
+
+
+# ==================== 测试工具 ====================
+
+
+async def test_fetch_transactions(wallet_address: str, api_key: str = "") -> None:
+    """测试获取钱包的 TRC20 USDT 转账记录"""
+    # 主网 USDT 合约地址
+    usdt_contract = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"
+    url = f"https://api.trongrid.io/v1/accounts/{wallet_address}/transactions/trc20"
+
+    headers = {}
+    if api_key:
+        headers["TRON-PRO-API-KEY"] = api_key
+
+    params = {
+        "only_to": "true",
+        "limit": 20,
+        "contract_address": usdt_contract,
+    }
+
+    print(f"\n{'='*60}")
+    print(f"钱包地址: {wallet_address}")
+    print(f"API Key: {'已配置' if api_key else '未配置'}")
+    print(f"USDT 合约: {usdt_contract}")
+    print(f"{'='*60}\n")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            response = await client.get(url, headers=headers, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            transactions = data.get("data", [])
+            print(f"获取到 {len(transactions)} 条交易记录\n")
+
+            if not transactions:
+                print("暂无转入交易")
+                return
+
+            for i, tx in enumerate(transactions, 1):
+                tx_id = tx.get("transaction_id", "N/A")
+                from_addr = tx.get("from", "N/A")
+                to_addr = tx.get("to", "N/A")
+                value = tx.get("value", "0")
+                # USDT 有 6 位小数
+                amount = Decimal(value) / Decimal(10**6)
+                token_info = tx.get("token_info", {})
+                symbol = token_info.get("symbol", "USDT")
+                block_timestamp = tx.get("block_timestamp", 0)
+
+                # 转换时间戳
+                from datetime import datetime
+
+                tx_time = datetime.fromtimestamp(block_timestamp / 1000).strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                )
+
+                print(f"[{i}] 交易 ID: {tx_id[:20]}...")
+                print(f"    时间: {tx_time}")
+                print(f"    发送方: {from_addr}")
+                print(f"    接收方: {to_addr}")
+                print(f"    金额: {amount} {symbol}")
+                print()
+
+        except httpx.HTTPStatusError as e:
+            print(f"HTTP 错误: {e.response.status_code}")
+            print(f"响应内容: {e.response.text}")
+        except Exception as e:
+            print(f"请求失败: {e}")
+
+
+if __name__ == "__main__":
+    import sys
+
+    print("\n" + "=" * 60)
+    print("TRC20 USDT 支付测试工具")
+    print("=" * 60)
+
+    # 从命令行获取钱包地址
+    if len(sys.argv) < 2:
+        print("\n用法: python -m app.services.payment.providers.trc20 <钱包地址> [API_KEY]")
+        print("\n示例:")
+        print("  python -m app.services.payment.providers.trc20 TXxxxxx")
+        print("  python -m app.services.payment.providers.trc20 TXxxxxx your-api-key")
+        sys.exit(1)
+
+    wallet = sys.argv[1]
+    api_key = sys.argv[2] if len(sys.argv) > 2 else ""
+
+    asyncio.run(test_fetch_transactions(wallet, api_key))

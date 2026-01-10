@@ -387,7 +387,9 @@ server {
    - 系统在用户支付金额后添加随机小数（如 10.001234）
    - 通过金额精确匹配订单
    - 每 30 秒自动检查链上交易
-
+4. 测试(uv 或者 python):
+   - uv run python -m app.services.payment.providers.trc20 <你的钱包地址> <API_KEY>
+   - python -m app.services.payment.providers.trc20 TXxxxxx your-api-key
 ## API 文档
 
 ### 文档地址
