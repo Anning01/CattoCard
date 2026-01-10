@@ -1,0 +1,109 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Local development
+*.log
+*.pot
+*.pyc
+.DS_Store
+
+# Database
+*.db
+*.sqlite3
+
+# Aerich migrations (keep directory but ignore if needed)
+# migrations/
+
+# Serena
+.serena
+
+# Claude
+.claude
+
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# UV
+.python-version
+uv.lock
+
+# Frontend
+node_modules/
+admin/dist/
+admin/src/auto-imports.d.ts
+admin/src/components.d.ts
+web/dist/
+web/node_modules/
+
+# Uploads
+uploads/
+
+# Logs
+logs/
+
+# Data
+data/

@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    margin: 0;
+    padding: 0;
+  }
+
+  .dark body {
+    @apply bg-gray-900 text-gray-100;
+  }
+
+  #app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@layer components {
+  /* 按钮样式 */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl
+           transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/25
+           hover:from-primary-700 hover:to-primary-600 hover:shadow-xl hover:shadow-primary-500/30
+           focus:ring-primary-500 active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply btn bg-white text-gray-700 border border-gray-200 shadow-sm
+           hover:bg-gray-50 hover:border-gray-300
+           focus:ring-primary-500;
+  }
+
+  .btn-ghost {
+    @apply btn text-gray-600 hover:bg-gray-100 hover:text-gray-900
+           focus:ring-gray-500;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-500 text-white shadow-lg shadow-red-500/25
+           hover:bg-red-600 hover:shadow-xl hover:shadow-red-500/30
+           focus:ring-red-500;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .btn-icon {
+    @apply p-2.5;
+  }
+
+  /* 输入框样式 */
+  .input {
+    @apply w-full px-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl
+           placeholder:text-gray-400
+           focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500
+           transition-all duration-200;
+  }
+
+  .input-lg {
+    @apply px-5 py-3.5 text-base rounded-2xl;
+  }
+
+  /* 卡片样式 */
+  .card {
+    @apply bg-white rounded-2xl border border-gray-100 shadow-sm
+           hover:shadow-lg hover:border-gray-200
+           transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply card hover:-translate-y-1 cursor-pointer;
+  }
+
+  /* 徽章样式 */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-100 text-primary-700;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-100 text-amber-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-700;
+  }
+
+  /* 容器 */
+  .container-lg {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* 骨架屏动画 */
+  .skeleton {
+    @apply bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-shimmer;
+  }
+
+  /* 标签筛选 */
+  .filter-chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full
+           border border-gray-200 bg-white text-gray-600
+           hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600
+           transition-all duration-200 cursor-pointer select-none;
+  }
+
+  .filter-chip-active {
+    @apply filter-chip border-primary-500 bg-primary-50 text-primary-700;
+  }
+
+  /* 价格样式 */
+  .price {
+    @apply text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent;
+  }
+
+  .price-sm {
+    @apply text-lg font-semibold text-primary-600;
+  }
+
+  /* Toast 通知 */
+  .toast {
+    @apply fixed z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg
+           bg-white border border-gray-100 animate-slide-up;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 玻璃态效果 */
+  .glass {
+    @apply bg-white/80 backdrop-blur-lg;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/80 backdrop-blur-lg;
+  }
+
+  /* 渐变文字 */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-purple-600 bg-clip-text text-transparent;
+  }
+
+  /* 线条装饰 */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

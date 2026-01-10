@@ -1,0 +1,109 @@
+// Element Plus 暗黑模式
+@use 'element-plus/theme-chalk/dark/css-vars.css';
+
+// CSS 变量
+:root {
+  --sidebar-width: 220px;
+  --header-height: 60px;
+  --transition-duration: 0.3s;
+}
+
+// 全局样式
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--el-border-color-darker);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+// 通用工具类
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 页面容器
+.page-container {
+  padding: 20px;
+
+  .page-header {
+    margin-bottom: 20px;
+
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+  }
+}
+
+// 表格操作按钮
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+// 表单弹窗
+.form-dialog {
+  .el-dialog__body {
+    padding-top: 10px;
+  }
+}
+
+// 状态标签
+.status-tag {
+  &.success {
+    --el-tag-bg-color: var(--el-color-success-light-9);
+    --el-tag-border-color: var(--el-color-success-light-5);
+    --el-tag-text-color: var(--el-color-success);
+  }
+
+  &.warning {
+    --el-tag-bg-color: var(--el-color-warning-light-9);
+    --el-tag-border-color: var(--el-color-warning-light-5);
+    --el-tag-text-color: var(--el-color-warning);
+  }
+
+  &.danger {
+    --el-tag-bg-color: var(--el-color-danger-light-9);
+    --el-tag-border-color: var(--el-color-danger-light-5);
+    --el-tag-text-color: var(--el-color-danger);
+  }
+}

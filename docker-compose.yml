@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  db:
+    image: postgres:16-alpine
+    container_name: cardstore-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cardstore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cardstore}
+      POSTGRES_DB: ${POSTGRES_DB:-cardstore}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cardstore-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cardstore}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 缓存（支付系统需要）
+  redis:
+    image: redis:7-alpine
+    container_name: cardstore-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - cardstore-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cardstore-backend
+    restart: unless-stopped
+    environment:
+      # 应用配置
+      APP_NAME: ${APP_NAME:-Card Store}
+      DEBUG: "false"
+      SECRET_KEY: ${SECRET_KEY}
+      # 数据库配置
+      DATABASE_URL: postgres://${POSTGRES_USER:-cardstore}:${POSTGRES_PASSWORD:-cardstore}@db:5432/${POSTGRES_DB:-cardstore}
+      # Redis 配置
+      REDIS_URL: redis://redis:6379/0
+      # 文件上传配置
+      UPLOAD_DIR: /app/uploads
+      STATIC_URL_PREFIX: /api/static
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cardstore-network
+
+  # 前台用户界面
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: cardstore-web
+    restart: unless-stopped
+    networks:
+      - cardstore-network
+
+  # 后台管理界面
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: cardstore-admin
+    restart: unless-stopped
+    networks:
+      - cardstore-network
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: cardstore-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./uploads:/var/www/uploads:ro
+    depends_on:
+      - backend
+      - web
+      - admin
+    networks:
+      - cardstore-network
+
+networks:
+  cardstore-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
