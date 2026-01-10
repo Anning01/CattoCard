@@ -165,56 +165,56 @@ async def get_payment_status(order_no: str):
 
 
 # ==================== 测试接口（仅用于开发测试，生产环境请删除） ====================
-@router.post("/mock-pay/{order_no}", response_model=ResponseModel, summary="[测试] 模拟支付成功")
-async def mock_payment(order_no: str):
-    """
-    模拟支付成功（仅用于测试）
+# @router.post("/mock-pay/{order_no}", response_model=ResponseModel, summary="[测试] 模拟支付成功")
+# async def mock_payment(order_no: str):
+#     """
+#     模拟支付成功（仅用于测试）
 
-    直接将订单状态改为已支付
-    """
-    from datetime import datetime
+#     直接将订单状态改为已支付
+#     """
+#     from datetime import datetime
 
-    from app.models.order import OrderLog
-    from app.services.delivery import DeliveryService
+#     from app.models.order import OrderLog
+#     from app.services.delivery import DeliveryService
 
-    logger.warning(f"[MOCK] 模拟支付: order_no={order_no}")
+#     logger.warning(f"[MOCK] 模拟支付: order_no={order_no}")
 
-    order = await Order.filter(order_no=order_no).first()
-    if not order:
-        raise NotFoundException(message="订单不存在")
+#     order = await Order.filter(order_no=order_no).first()
+#     if not order:
+#         raise NotFoundException(message="订单不存在")
 
-    if order.status != OrderStatus.PENDING:
-        raise BadRequestException(message="订单状态不正确")
+#     if order.status != OrderStatus.PENDING:
+#         raise BadRequestException(message="订单状态不正确")
 
-    # 更新订单状态为已支付
-    order.status = OrderStatus.PAID
-    order.paid_at = datetime.now()
-    order.payment_data = {"mock": True, "paid_at": datetime.now().isoformat()}
-    await order.save()
+#     # 更新订单状态为已支付
+#     order.status = OrderStatus.PAID
+#     order.paid_at = datetime.now()
+#     order.payment_data = {"mock": True, "paid_at": datetime.now().isoformat()}
+#     await order.save()
 
-    # 记录订单日志
-    await OrderLog.create(
-        order=order,
-        action="payment",
-        content="[MOCK] 模拟支付成功",
-    )
+#     # 记录订单日志
+#     await OrderLog.create(
+#         order=order,
+#         action="payment",
+#         content="[MOCK] 模拟支付成功",
+#     )
 
-    # 发送支付成功邮件（异步）
-    asyncio.create_task(
-        EmailService.send_payment_success_email(
-            to_email=order.email,
-            order_no=order_no,
-            total_price=str(order.total_price),
-            currency=order.currency,
-        )
-    )
+#     # 发送支付成功邮件（异步）
+#     asyncio.create_task(
+#         EmailService.send_payment_success_email(
+#             to_email=order.email,
+#             order_no=order_no,
+#             total_price=str(order.total_price),
+#             currency=order.currency,
+#         )
+#     )
 
-    # 检查是否启用虚拟商品自动发货
-    if await DeliveryService.get_auto_delivery_enabled():
-        success, message, count = await DeliveryService.auto_deliver_virtual_items(order)
-        if success and count > 0:
-            logger.info(f"[MOCK] 虚拟商品自动发货成功: order_no={order_no}, count={count}")
+#     # 检查是否启用虚拟商品自动发货
+#     if await DeliveryService.get_auto_delivery_enabled():
+#         success, message, count = await DeliveryService.auto_deliver_virtual_items(order)
+#         if success and count > 0:
+#             logger.info(f"[MOCK] 虚拟商品自动发货成功: order_no={order_no}, count={count}")
 
-    logger.warning(f"[MOCK] 支付模拟成功: order_no={order_no}")
+#     logger.warning(f"[MOCK] 支付模拟成功: order_no={order_no}")
 
-    return success_response(message="模拟支付成功")
+#     return success_response(message="模拟支付成功")
