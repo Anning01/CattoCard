@@ -555,6 +555,13 @@ asyncio.run(reset())
 3. 实现 `create_payment` 和 `query_payment` 方法
 4. 在 `registry.py` 中注册
 
+
+### Q: 创建了支付方式但是显示支付方式不可用
+
+1. 重启一下backend服务
+2. docker compose restart backend
+
+
 ## 开源协议
 
 [MIT License](LICENSE)
