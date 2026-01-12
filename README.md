@@ -82,7 +82,7 @@
 
 ```bash
 git clone https://github.com/Anning01/CattoCard.git
-cd cardstore
+cd CattoCard
 ```
 
 #### 2. 后端设置
@@ -144,7 +144,7 @@ curl -X POST "http://localhost:8000/api/admin/auth/init" \
 ```bash
 # 克隆项目
 git clone https://github.com/Anning01/CattoCard.git
-cd cardstore
+cd CattoCard
 
 # 配置环境变量
 cp .env.example .env
@@ -160,6 +160,10 @@ POSTGRES_DB=cardstore
 
 # JWT 密钥（必须修改）
 SECRET_KEY=your-secret-key  # 使用 openssl rand -base64 32 生成
+
+# 初始管理员账号（首次启动自动创建）
+INIT_ADMIN_USERNAME=admin
+INIT_ADMIN_PASSWORD=your-admin-password  # 请修改
 ```
 
 #### 2. 启动服务
@@ -169,24 +173,28 @@ SECRET_KEY=your-secret-key  # 使用 openssl rand -base64 32 生成
 docker compose up -d
 
 # 查看日志
-docker compose logs -f
+docker compose logs -f backend
 
 # 查看服务状态
 docker compose ps
 ```
 
-#### 3. 初始化数据库
+> 首次启动会自动初始化数据库并创建管理员，后续启动自动跳过。
+
+**端口被占用？** 如果 80 端口已被其他服务使用，可以指定其他端口：
 
 ```bash
-# 进入后端容器
-docker compose exec backend bash
+# 方式1：命令行指定
+HTTP_PORT=8080 HTTPS_PORT=8443 docker compose up -d
 
-# 运行迁移
-uv run aerich init-db
-exit
+# 方式2：在 .env 文件中配置
+# HTTP_PORT=8080
+# HTTPS_PORT=8443
 ```
 
-#### 4. 访问服务
+然后通过 `http://localhost:8080` 访问。
+
+#### 3. 访问服务
 
 | 服务 | 地址 |
 |------|------|
