@@ -320,7 +320,7 @@ async function handleBuyNow() {
                 <span class="text-gray-500">数量:</span>
                 <div class="flex items-center">
                   <button
-                    class="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-l-xl hover:bg-gray-50 disabled:opacity-50"
+                    class="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-l-xl bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                     :disabled="quantity <= 1"
                     @click="quantity = Math.max(1, quantity - 1)"
                   >
@@ -331,10 +331,10 @@ async function handleBuyNow() {
                     type="number"
                     min="1"
                     :max="product.stock"
-                    class="w-16 h-10 text-center border-y border-gray-200 focus:outline-none"
+                    class="w-16 h-10 text-center border-y border-gray-200 bg-white text-gray-900 focus:outline-none"
                   />
                   <button
-                    class="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-r-xl hover:bg-gray-50 disabled:opacity-50"
+                    class="w-10 h-10 flex items-center justify-center border border-gray-200 rounded-r-xl bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50"
                     :disabled="quantity >= product.stock"
                     @click="quantity = Math.min(product.stock, quantity + 1)"
                   >

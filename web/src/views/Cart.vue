@@ -146,17 +146,17 @@ function checkout() {
                 <div class="flex items-end justify-between mt-4">
                   <div class="flex items-center">
                     <button
-                      class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-l-lg hover:bg-gray-50 disabled:opacity-50"
+                      class="w-8 h-8 flex items-center justify-center border border-gray-200 bg-white text-gray-700 rounded-l-lg hover:bg-gray-50 disabled:opacity-50"
                       :disabled="item.quantity <= 1"
                       @click="updateQuantity(item.product.id, -1)"
                     >
                       <MinusIcon class="w-4 h-4" />
                     </button>
-                    <span class="w-12 h-8 flex items-center justify-center border-y border-gray-200 text-sm font-medium">
+                    <span class="w-12 h-8 flex items-center justify-center border-y border-gray-200 bg-white text-gray-700 text-sm font-medium">
                       {{ item.quantity }}
                     </span>
                     <button
-                      class="w-8 h-8 flex items-center justify-center border border-gray-200 rounded-r-lg hover:bg-gray-50 disabled:opacity-50"
+                      class="w-8 h-8 flex items-center justify-center border border-gray-200 bg-white text-gray-700 rounded-r-lg hover:bg-gray-50 disabled:opacity-50"
                       :disabled="item.quantity >= item.product.stock"
                       @click="updateQuantity(item.product.id, 1)"
                     >

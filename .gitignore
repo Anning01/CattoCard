@@ -107,3 +107,9 @@ logs/
 
 # Data
 data/
+
+# 定时任务相关文件（不推送到仓库）
+docker-compose.cron.yml
+Dockerfile.cron
+scripts/daily_reset.py
+scripts/init_test_data.py
