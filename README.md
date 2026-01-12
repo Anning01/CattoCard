@@ -81,7 +81,7 @@
 #### 1. 克隆项目
 
 ```bash
-git clone https://github.com/your-username/cardstore.git
+git clone https://github.com/Anning01/CattoCard.git
 cd cardstore
 ```
 
@@ -143,7 +143,7 @@ curl -X POST "http://localhost:8000/api/admin/auth/init" \
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/cardstore.git
+git clone https://github.com/Anning01/CattoCard.git
 cd cardstore
 
 # 配置环境变量

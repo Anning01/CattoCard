@@ -88,6 +88,7 @@ onMounted(() => {
         :default-openeds="defaultOpeneds"
         :collapse="appStore.sidebarCollapsed"
         :collapse-transition="false"
+        :unique-opened="true"
         background-color="transparent"
         @select="handleMenuSelect"
       >

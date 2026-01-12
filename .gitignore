@@ -73,7 +73,7 @@ celerybeat.pid
 *.sqlite3
 
 # Aerich migrations (keep directory but ignore if needed)
-# migrations/
+migrations/
 
 # Serena
 .serena

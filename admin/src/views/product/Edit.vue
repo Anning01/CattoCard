@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { get, post, put, upload, del } from '@/utils/request'
+import { useAppStore } from '@/stores/app'
 import type { Product, Category, PaymentMethod, ProductImage, ProductTag, ProductIntro, InventoryItem } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Delete, Upload } from '@element-plus/icons-vue'
@@ -10,6 +11,7 @@ const router = useRouter()
 const route = useRoute()
 const loading = ref(false)
 const fileInputRef = ref<HTMLInputElement>()
+const appStore = useAppStore()
 
 const isEdit = computed(() => !!route.params.id)
 const pageTitle = computed(() => (isEdit.value ? '编辑商品' : '添加商品'))
@@ -350,7 +352,7 @@ const soldCount = computed(() => inventoryItems.value.filter(i => i.is_sold).len
               <el-col :span="12">
                 <el-form-item label="商品价格" prop="price">
                   <el-input v-model="form.price" placeholder="0.00">
-                    <template #prepend>¥</template>
+                    <template #prepend>{{ appStore.siteConfig.currency_symbol }}</template>
                   </el-input>
                 </el-form-item>
               </el-col>
