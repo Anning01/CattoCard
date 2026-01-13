@@ -463,7 +463,7 @@ async function handleBuyNow() {
 
     <!-- 立即购买弹窗 -->
     <Transition name="fade">
-      <div v-if="showBuyNowModal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" @click.self="showBuyNowModal = false">
+      <div v-if="showBuyNowModal" class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" @mousedown.self="showBuyNowModal = false">
         <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
           <div class="flex items-center justify-between p-4 border-b shrink-0">
             <h3 class="text-lg font-semibold text-gray-900">立即购买</h3>

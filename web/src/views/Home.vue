@@ -69,7 +69,7 @@ function goToBanner(banner: Banner) {
   <div>
     <!-- 弹窗公告 -->
     <Transition name="fade">
-      <div v-if="showPopup && popupAnnouncement" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="closePopup">
+      <div v-if="showPopup && popupAnnouncement" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @mousedown.self="closePopup">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full animate-scale-in overflow-hidden">
           <div class="flex items-center justify-between px-6 py-4 border-b">
             <div class="flex items-center gap-2">
