@@ -20,10 +20,6 @@ RUN uv sync --no-dev
 # 复制应用代码
 COPY app ./app
 
-# 复制启动脚本
-COPY scripts ./scripts
-RUN chmod +x /app/scripts/docker-entrypoint.sh
-
 # 复制 .env.example 并自动生成 .env（如果不存在）
 COPY .env.example .env.example
 RUN if [ ! -f .env ]; then \
@@ -41,6 +37,11 @@ RUN if [ ! -f .env ]; then \
         echo "✓ .env 文件已自动创建"; \
         echo "⚠️  请注意：管理员密码已自动生成，请查看日志或登录后修改"; \
     fi
+
+# 复制启动脚本
+COPY scripts ./scripts
+RUN chmod +x /app/scripts/docker-entrypoint.sh
+
 
 # 创建必要目录
 RUN mkdir -p uploads logs data migrations
