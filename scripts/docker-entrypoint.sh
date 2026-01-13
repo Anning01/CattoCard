@@ -5,6 +5,19 @@ echo "=========================================="
 echo "CardStore 后端服务启动中..."
 echo "=========================================="
 
+# 显示自动生成的管理员密码（如果存在）
+if [ -f .env ]; then
+    ADMIN_PASSWORD=$(grep "^INIT_ADMIN_PASSWORD=" .env | cut -d'=' -f2)
+    if [ "$ADMIN_PASSWORD" != "your-admin-password" ]; then
+        echo "=========================================="
+        echo "⚠️  自动生成的管理员密码："
+        echo "   用户名: admin"
+        echo "   密码: $ADMIN_PASSWORD"
+        echo "   请登录后立即修改密码！"
+        echo "=========================================="
+    fi
+fi
+
 # 1. 等待数据库连接
 sleep 3
 
