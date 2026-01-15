@@ -288,6 +288,11 @@ class ProductCreate(ProductBase):
     images: list[ProductImageCreate] = Field(default_factory=list, description="商品图片列表")
     tags: list[ProductTagCreate] = Field(default_factory=list, description="商品标签列表")
     intros: list[ProductIntroCreate] = Field(default_factory=list, description="商品介绍列表")
+    inventory_contents: list[str] | None = Field(
+        None,
+        description="虚拟商品卡密列表（仅虚拟商品需要）",
+        examples=[["CODE-0001", "CODE-0002", "CODE-0003"]],
+    )
 
 
 class ProductUpdate(BaseSchema):

@@ -160,6 +160,26 @@ async def delete_payment_method(method_id: int):
     return success_response(message="删除成功")
 
 
+@router.get("/payment-methods/trc20/scan-logs", response_model=ResponseModel, summary="获取TRC20扫描日志")
+async def get_trc20_scan_logs(
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    """获取 TRC20 支付扫描日志"""
+    from app.utils.redis_client import get_scan_logs, get_scan_logs_count
+    
+    logger.info(f"获取TRC20扫描日志: limit={limit}, offset={offset}")
+    logs = await get_scan_logs(limit=limit, offset=offset)
+    total = await get_scan_logs_count()
+    
+    return success_response(data={
+        "logs": logs,
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    })
+
+
 # ==================== 商品管理 ====================
 async def _get_product_detail(product_id: int) -> ProductDetailResponse:
     product = await Product.filter(id=product_id).first()
@@ -270,7 +290,7 @@ async def create_product(data: ProductCreate):
             raise BadRequestException(message=f"支付方式ID {pm_id} 不存在")
         payment_methods.append(pm)
 
-    product_data = data.model_dump(exclude={"payment_method_ids", "images", "tags", "intros"})
+    product_data = data.model_dump(exclude={"payment_method_ids", "images", "tags", "intros", "inventory_contents"})
     product = await Product.create(**product_data)
 
     await product.payment_methods.add(*payment_methods)
@@ -287,6 +307,15 @@ async def create_product(data: ProductCreate):
 
     for intro_data in data.intros:
         await ProductIntro.create(product=product, **intro_data.model_dump())
+
+    # 创建虚拟商品卡密
+    if data.product_type == "virtual" and data.inventory_contents:
+        for content in data.inventory_contents:
+            await InventoryItem.create(product=product, content=content)
+        # 更新库存数量
+        product.stock = len(data.inventory_contents)
+        await product.save()
+        logger.info(f"已添加 {len(data.inventory_contents)} 条卡密")
 
     logger.info(f"商品创建成功: id={product.id}")
     response_data = await _get_product_detail(product.id)

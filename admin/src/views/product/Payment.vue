@@ -9,6 +9,12 @@ const loading = ref(false)
 const list = ref<PaymentMethod[]>([])
 const fileInputRef = ref<HTMLInputElement>()
 
+// TRC20 扫描日志
+const showScanLogsDialog = ref(false)
+const scanLogs = ref<any[]>([])
+const scanLogsTotal = ref(0)
+const scanLogsLoading = ref(false)
+
 // 弹窗
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
@@ -296,6 +302,57 @@ function getProviderName(metaData: Record<string, unknown>) {
   }
   return '自定义'
 }
+
+// 是否是 TRC20 支付方式
+function isTRC20Payment(metaData: Record<string, unknown>) {
+  return metaData?.provider_id === 'trc20_usdt'
+}
+
+// 打开扫描日志
+async function openScanLogs() {
+  showScanLogsDialog.value = true
+  await loadScanLogs()
+}
+
+// 加载扫描日志
+async function loadScanLogs() {
+  scanLogsLoading.value = true
+  try {
+    const res = await get<{ logs: any[]; total: number }>('/admin/products/payment-methods/trc20/scan-logs', {
+      limit: 50,
+      offset: 0,
+    })
+    scanLogs.value = res.data.logs
+    scanLogsTotal.value = res.data.total
+  } catch {
+    // 错误已处理
+  } finally {
+    scanLogsLoading.value = false
+  }
+}
+
+// 格式化时间戳
+function formatTimestamp(timestamp: number) {
+  if (!timestamp) return '-'
+  return new Date(timestamp * 1000).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}
+
+// 格式化日志类型
+function getLogTypeTag(type: string) {
+  const types: Record<string, { label: string; type: 'success' | 'info' | 'warning' | 'danger' }> = {
+    scan: { label: '扫描', type: 'info' },
+    match: { label: '匹配', type: 'success' },
+    error: { label: '错误', type: 'danger' },
+  }
+  return types[type] || { label: type, type: 'info' }
+}
 </script>
 
 <template>
@@ -333,11 +390,14 @@ function getProviderName(metaData: Record<string, unknown>) {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="auto" fixed="right">
           <template #default="{ row }">
             <div class="table-actions">
               <el-button type="primary" :icon="Edit" link @click="openEdit(row)">编辑</el-button>
               <el-button type="danger" :icon="Delete" link @click="handleDelete(row)">删除</el-button>
+              <el-button v-if="isTRC20Payment(row.meta_data)" type="success" link @click="openScanLogs">
+                扫描日志
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -479,6 +539,74 @@ function getProviderName(metaData: Record<string, unknown>) {
         <el-button type="primary" @click="handleSubmit">保存</el-button>
       </template>
     </el-dialog>
+
+    <!-- TRC20 扫描日志对话框 -->
+    <el-dialog v-model="showScanLogsDialog" title="TRC20 扫描日志" width="900px" class="scan-logs-dialog">
+      <div v-loading="scanLogsLoading">
+        <div class="logs-header">
+          <div class="logs-stats">
+            <el-statistic title="总日志数" :value="scanLogsTotal" />
+            <el-statistic 
+              v-if="scanLogs.length > 0" 
+              title="最近扫描" 
+              :value="formatTimestamp(scanLogs[0]?.time || 0)" 
+            />
+          </div>
+          <el-button size="small" @click="loadScanLogs">刷新</el-button>
+        </div>
+
+        <el-table :data="scanLogs" style="margin-top: 20px" max-height="500">
+          <el-table-column label="时间" width="180">
+            <template #default="{ row }">
+              {{ formatTimestamp(row.time) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="类型" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getLogTypeTag(row.type).type" size="small">
+                {{ getLogTypeTag(row.type).label }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="扫描数量" width="100">
+            <template #default="{ row }">
+              <span>{{ row.scanned || 0 }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="匹配数量" width="100">
+            <template #default="{ row }">
+              <el-tag v-if="row.matched > 0" type="success" size="small">{{ row.matched }}</el-tag>
+              <span v-else class="text-muted">0</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="耗时" width="120">
+            <template #default="{ row }">
+              <span class="text-muted">{{ (row.duration || 0).toFixed(2) }}s</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="详情" min-width="200">
+            <template #default="{ row }">
+              <div v-if="row.message" class="log-message">{{ row.message }}</div>
+              <div v-if="row.error" class="log-error">
+                <el-text type="danger" size="small">{{ row.error }}</el-text>
+              </div>
+              <div v-if="row.tx_id" class="log-tx">
+                <el-link
+                  :href="`https://tronscan.org/#/transaction/${row.tx_id}`"
+                  target="_blank"
+                  type="primary"
+                  size="small"
+                >
+                  查看交易
+                </el-link>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <el-empty v-if="!scanLogs.length && !scanLogsLoading" description="暂无扫描日志" />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -527,5 +655,42 @@ function getProviderName(metaData: Record<string, unknown>) {
   margin-left: 8px;
   font-size: 12px;
   color: var(--el-text-color-secondary);
+}
+
+.logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--el-fill-color-light);
+  border-radius: 6px;
+
+  .logs-stats {
+    display: flex;
+    gap: 40px;
+  }
+}
+
+.log-message {
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.log-error {
+  margin-top: 4px;
+}
+
+.log-tx {
+  margin-top: 4px;
+}
+
+.text-muted {
+  color: var(--el-text-color-secondary);
+}
+
+.scan-logs-dialog {
+  :deep(.el-dialog__body) {
+    padding: 20px;
+  }
 }
 </style>

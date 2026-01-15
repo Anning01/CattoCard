@@ -73,8 +73,11 @@ const showInventoryDialog = ref(false)
 const inventoryInput = ref('')
 const inventoryInputMode = ref<'single' | 'batch'>('single')
 
+// 创建模式下的临时卡密列表
+const tempInventoryItems = ref<{ content: string }[]>([])
+
 // 是否显示库存管理
-const showInventory = computed(() => isEdit.value && form.value.product_type === 'virtual')
+const showInventory = computed(() => form.value.product_type === 'virtual')
 
 onMounted(async () => {
   await Promise.all([loadCategories(), loadPaymentMethods(), loadTagSuggestions()])
@@ -172,29 +175,53 @@ async function handleAddInventory() {
     return
   }
 
-  try {
-    await post(`/admin/products/${route.params.id}/inventory`, { contents })
+  // 编辑模式：直接保存到数据库
+  if (isEdit.value) {
+    try {
+      await post(`/admin/products/${route.params.id}/inventory`, { contents })
+      ElMessage.success(`成功添加 ${contents.length} 条卡密`)
+      showInventoryDialog.value = false
+      await loadInventory()
+      // 更新库存数量
+      form.value.stock = inventoryItems.value.filter(i => !i.is_sold).length
+    } catch {
+      // 错误已处理
+    }
+  } else {
+    // 创建模式：添加到临时列表
+    contents.forEach(content => {
+      tempInventoryItems.value.push({ content })
+    })
     ElMessage.success(`成功添加 ${contents.length} 条卡密`)
     showInventoryDialog.value = false
-    await loadInventory()
     // 更新库存数量
-    form.value.stock = inventoryItems.value.filter(i => !i.is_sold).length
-  } catch {
-    // 错误已处理
+    form.value.stock = tempInventoryItems.value.length
   }
 }
 
 // 删除库存项
-async function handleDeleteInventory(item: InventoryItem) {
+async function handleDeleteInventory(item: InventoryItem | { content: string }, index?: number) {
   await ElMessageBox.confirm('确定要删除该卡密吗？', '删除确认', { type: 'warning' })
-  try {
-    await del(`/admin/products/${route.params.id}/inventory/${item.id}`)
-    ElMessage.success('删除成功')
-    await loadInventory()
-    // 更新库存数量
-    form.value.stock = inventoryItems.value.filter(i => !i.is_sold).length
-  } catch {
-    // 错误已处理
+  
+  // 编辑模式：从数据库删除
+  if (isEdit.value && 'id' in item) {
+    try {
+      await del(`/admin/products/${route.params.id}/inventory/${item.id}`)
+      ElMessage.success('删除成功')
+      await loadInventory()
+      // 更新库存数量
+      form.value.stock = inventoryItems.value.filter(i => !i.is_sold).length
+    } catch {
+      // 错误已处理
+    }
+  } else {
+    // 创建模式：从临时列表删除
+    if (index !== undefined) {
+      tempInventoryItems.value.splice(index, 1)
+      ElMessage.success('删除成功')
+      // 更新库存数量
+      form.value.stock = tempInventoryItems.value.length
+    }
   }
 }
 
@@ -299,6 +326,10 @@ async function handleSubmit() {
         sort_order: index,
         is_active: intro.is_active,
       })),
+      // 创建模式下添加卡密列表
+      ...((!isEdit.value && form.value.product_type === 'virtual') ? {
+        inventory_contents: tempInventoryItems.value.map(item => item.content)
+      } : {})
     }
 
     if (isEdit.value) {
@@ -318,8 +349,36 @@ function handleCancel() {
 }
 
 // 未售出数量
-const unsoldCount = computed(() => inventoryItems.value.filter(i => !i.is_sold).length)
-const soldCount = computed(() => inventoryItems.value.filter(i => i.is_sold).length)
+const unsoldCount = computed(() => {
+  if (isEdit.value) {
+    return inventoryItems.value.filter(i => !i.is_sold).length
+  } else {
+    return tempInventoryItems.value.length
+  }
+})
+const soldCount = computed(() => {
+  if (isEdit.value) {
+    return inventoryItems.value.filter(i => i.is_sold).length
+  } else {
+    return 0
+  }
+})
+
+// 显示的库存列表
+const displayInventoryItems = computed(() => {
+  if (isEdit.value) {
+    return inventoryItems.value
+  } else {
+    return tempInventoryItems.value.map((item, index) => ({
+      id: index,
+      content: item.content,
+      is_sold: false,
+      sold_at: null,
+      created_at: '',
+      updated_at: ''
+    }))
+  }
+})
 </script>
 
 <template>
@@ -379,10 +438,10 @@ const soldCount = computed(() => inventoryItems.value.filter(i => i.is_sold).len
                   <el-input-number
                     v-model="form.stock"
                     :min="0"
-                    :disabled="form.product_type === 'virtual' && isEdit"
+                    :disabled="form.product_type === 'virtual'"
                     style="width: 100%"
                   />
-                  <div v-if="form.product_type === 'virtual' && isEdit" class="form-tip">
+                  <div v-if="form.product_type === 'virtual'" class="form-tip">
                     虚拟商品库存由卡密数量决定
                   </div>
                 </el-form-item>
@@ -395,45 +454,45 @@ const soldCount = computed(() => inventoryItems.value.filter(i => i.is_sold).len
             </el-row>
           </el-card>
 
-          <!-- 卡密管理（仅虚拟商品且编辑模式显示） -->
+          <!-- 卡密管理（虚拟商品显示） -->
           <el-card v-if="showInventory" class="form-card" v-loading="inventoryLoading">
             <template #header>
               <div class="flex-between">
                 <span>
                   卡密管理
                   <el-tag size="small" type="success" style="margin-left: 8px">未售出: {{ unsoldCount }}</el-tag>
-                  <el-tag size="small" type="info" style="margin-left: 4px">已售出: {{ soldCount }}</el-tag>
+                  <el-tag v-if="isEdit" size="small" type="info" style="margin-left: 4px">已售出: {{ soldCount }}</el-tag>
                 </span>
                 <el-button type="primary" :icon="Plus" size="small" @click="openInventoryDialog">添加卡密</el-button>
               </div>
             </template>
 
-            <el-table :data="inventoryItems" style="width: 100%" max-height="400">
+            <el-table :data="displayInventoryItems" style="width: 100%" max-height="400">
               <el-table-column prop="content" label="卡密内容" min-width="200">
                 <template #default="{ row }">
                   <span :class="{ 'sold-content': row.is_sold }">{{ row.content }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="状态" width="100">
+              <el-table-column v-if="isEdit" label="状态" width="100">
                 <template #default="{ row }">
                   <el-tag v-if="row.is_sold" type="info" size="small">已售出</el-tag>
                   <el-tag v-else type="success" size="small">未售出</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="售出时间" width="180">
+              <el-table-column v-if="isEdit" label="售出时间" width="180">
                 <template #default="{ row }">
                   <span v-if="row.sold_at">{{ new Date(row.sold_at).toLocaleString() }}</span>
                   <span v-else class="text-gray">-</span>
                 </template>
               </el-table-column>
               <el-table-column label="操作" width="100">
-                <template #default="{ row }">
+                <template #default="{ row, $index }">
                   <el-button
                     v-if="!row.is_sold"
                     type="danger"
                     :icon="Delete"
                     link
-                    @click="handleDeleteInventory(row)"
+                    @click="handleDeleteInventory(row, $index)"
                   >
                     删除
                   </el-button>
@@ -441,7 +500,7 @@ const soldCount = computed(() => inventoryItems.value.filter(i => i.is_sold).len
                 </template>
               </el-table-column>
             </el-table>
-            <el-empty v-if="!inventoryItems.length" description="暂无卡密" :image-size="60" />
+            <el-empty v-if="!displayInventoryItems.length" description="暂无卡密" :image-size="60" />
           </el-card>
 
           <!-- 商品图片 -->
