@@ -157,7 +157,7 @@ async def get_payment_status(order_no: str):
 
     # 如果订单仍在待支付状态，主动查询支付平台确认
     if status == "pending" and pending:
-        provider_id = pending.get("provider_id", "")
+        provider_id = pending.get("provider", "")
         registry = get_registry()
         provider = registry.get_active_provider(provider_id)
 
