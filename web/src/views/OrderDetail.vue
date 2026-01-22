@@ -440,7 +440,7 @@ function copyPaymentAmount() {
             <div class="flex justify-center mb-6">
               <div class="p-4 bg-white border-2 border-gray-100 rounded-xl">
                 <QrcodeVue
-                  :value="paymentData.payment_data.qr_content || ''"
+                  :value="paymentData.payment_data?.qr_content || paymentData.payment_data?.code_url || paymentData.payment_url || ''"
                   :size="200"
                   level="M"
                 />
@@ -449,50 +449,75 @@ function copyPaymentAmount() {
 
             <!-- 支付信息 -->
             <div class="space-y-4">
-              <!-- 网络类型 -->
-              <div v-if="paymentData.payment_data.network" class="flex items-center justify-between p-3 bg-orange-50 rounded-xl">
-                <span class="text-gray-600">网络</span>
-                <span class="font-bold text-orange-600">{{ paymentData.payment_data.network }}</span>
-              </div>
+              <!-- 微信支付提示 -->
+              <template v-if="paymentData.payment_data.code_url || paymentData.payment_url">
+                <div class="flex items-center justify-between p-3 bg-green-50 rounded-xl">
+                  <span class="text-gray-600">支付方式</span>
+                  <span class="font-bold text-green-600">微信支付</span>
+                </div>
 
-              <!-- 支付金额 -->
-              <div class="flex items-center justify-between p-3 bg-primary-50 rounded-xl">
-                <span class="text-gray-600">支付金额</span>
-                <div class="flex items-center gap-2">
+                <!-- 支付金额 -->
+                <div class="flex items-center justify-between p-3 bg-primary-50 rounded-xl">
+                  <span class="text-gray-600">支付金额</span>
                   <span class="font-bold text-primary-600 text-lg">
-                    {{ paymentData.payment_data.amount }} {{ paymentData.payment_data.currency || 'USDT' }}
+                    ¥{{ order?.total_price }}
                   </span>
-                  <button
-                    class="text-primary-600 hover:text-primary-700"
-                    @click="copyPaymentAmount"
-                  >
-                    <DocumentDuplicateIcon class="w-5 h-5" />
-                  </button>
                 </div>
-              </div>
 
-              <!-- 钱包地址 -->
-              <div v-if="paymentData.payment_data.wallet_address" class="p-3 bg-gray-50 rounded-xl">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-gray-600">收款地址</span>
-                  <button
-                    class="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1"
-                    @click="copyWalletAddress"
-                  >
-                    <DocumentDuplicateIcon class="w-4 h-4" />
-                    复制
-                  </button>
+                <!-- 微信支付提示 -->
+                <div class="text-center text-sm text-gray-500 space-y-1">
+                  <p>请使用微信扫一扫完成支付</p>
+                  <p class="text-green-600 font-medium">支付成功后页面将自动更新</p>
                 </div>
-                <p class="font-mono text-sm text-gray-800 break-all">
-                  {{ paymentData.payment_data.wallet_address }}
-                </p>
-              </div>
+              </template>
 
-              <!-- 提示 -->
-              <div class="text-center text-sm text-gray-500 space-y-1">
-                <p>请使用支持 TRC20 的钱包扫码支付</p>
-                <p class="text-orange-600 font-medium">⚠️ 请务必转账精确金额，否则无法自动确认</p>
-              </div>
+              <!-- TRC20/其他支付提示 -->
+              <template v-else>
+                <!-- 网络类型 -->
+                <div v-if="paymentData.payment_data.network" class="flex items-center justify-between p-3 bg-orange-50 rounded-xl">
+                  <span class="text-gray-600">网络</span>
+                  <span class="font-bold text-orange-600">{{ paymentData.payment_data.network }}</span>
+                </div>
+
+                <!-- 支付金额 -->
+                <div class="flex items-center justify-between p-3 bg-primary-50 rounded-xl">
+                  <span class="text-gray-600">支付金额</span>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-primary-600 text-lg">
+                      {{ paymentData.payment_data.amount }} {{ paymentData.payment_data.currency || 'USDT' }}
+                    </span>
+                    <button
+                      class="text-primary-600 hover:text-primary-700"
+                      @click="copyPaymentAmount"
+                    >
+                      <DocumentDuplicateIcon class="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 钱包地址 -->
+                <div v-if="paymentData.payment_data.wallet_address" class="p-3 bg-gray-50 rounded-xl">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600">收款地址</span>
+                    <button
+                      class="text-primary-600 hover:text-primary-700 text-sm flex items-center gap-1"
+                      @click="copyWalletAddress"
+                    >
+                      <DocumentDuplicateIcon class="w-4 h-4" />
+                      复制
+                    </button>
+                  </div>
+                  <p class="font-mono text-sm text-gray-800 break-all">
+                    {{ paymentData.payment_data.wallet_address }}
+                  </p>
+                </div>
+
+                <!-- TRC20 提示 -->
+                <div class="text-center text-sm text-gray-500 space-y-1">
+                  <p>请使用支持 TRC20 的钱包扫码支付</p>
+                  <p class="text-orange-600 font-medium">⚠️ 请务必转账精确金额，否则无法自动确认</p>
+                </div>
+              </template>
             </div>
           </div>
 

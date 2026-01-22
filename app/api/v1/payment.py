@@ -3,7 +3,8 @@
 import asyncio
 import time
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.logger import logger
@@ -163,6 +164,58 @@ async def get_payment_status(order_no: str):
         }
     )
 
+# 微信支付回调
+@router.post("/wechat/callback", summary="微信支付回调")
+async def wechat_callback(request: Request):
+    """
+    微信支付回调接口
+
+    接收微信支付的异步通知，验证签名并解密数据
+    """
+    try:
+        # 1. 获取请求头和请求体
+        headers = dict(request.headers)
+        body = await request.body()
+        body_str = body.decode("utf-8")
+
+        logger.info(f"微信支付回调 - Headers: {headers}")
+        logger.info(f"微信支付回调 - Body: {body_str}")
+
+        # 2. 获取微信支付提供者实例
+        registry = get_registry()
+        provider = registry.get_active_provider("wechat")
+
+        if not provider:
+            logger.error("微信支付回调失败: 未找到微信支付提供者")
+            return JSONResponse(
+                status_code=500,
+                content={"code": "FAIL", "message": "支付服务不可用"}
+            )
+
+        # 3. 调用 provider 的 handle_callback 处理业务逻辑
+        result = await provider.handle_callback({
+            "headers": headers,
+            "body": body_str
+        })
+
+        # 4. 根据处理结果返回响应
+        if result.get("success"):
+            return JSONResponse(
+                status_code=200,
+                content={"code": "SUCCESS", "message": "成功"}
+            )
+        else:
+            return JSONResponse(
+                status_code=400,
+                content={"code": "FAIL", "message": result.get("message", "处理失败")}
+            )
+
+    except Exception as e:
+        logger.exception(f"微信支付回调异常: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"code": "FAIL", "message": "系统异常"}
+        )
 
 # ==================== 测试接口（仅用于开发测试，生产环境请删除） ====================
 # @router.post("/mock-pay/{order_no}", response_model=ResponseModel, summary="[测试] 模拟支付成功")
