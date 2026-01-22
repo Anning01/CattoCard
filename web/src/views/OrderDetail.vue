@@ -59,6 +59,21 @@ const countdownText = computed(() => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 })
 
+// 二维码内容
+const qrCodeValue = computed(() => {
+  if (!paymentData.value) return ''
+  const data = paymentData.value.payment_data
+  // 优先使用 qr_content (TRC20)，其次 code_url (微信)，最后 payment_url
+  return String(data?.qr_content || data?.code_url || paymentData.value.payment_url || '')
+})
+
+// 是否是微信支付
+const isWechatPay = computed(() => {
+  if (!paymentData.value) return false
+  const data = paymentData.value.payment_data
+  return !!(data?.code_url || paymentData.value.payment_url)
+})
+
 onMounted(async () => {
   const orderNo = route.params.orderNo as string
   email.value = (route.query.email as string) || ''
@@ -440,7 +455,7 @@ function copyPaymentAmount() {
             <div class="flex justify-center mb-6">
               <div class="p-4 bg-white border-2 border-gray-100 rounded-xl">
                 <QrcodeVue
-                  :value="paymentData.payment_data?.qr_content || paymentData.payment_data?.code_url || paymentData.payment_url || ''"
+                  :value="qrCodeValue"
                   :size="200"
                   level="M"
                 />
@@ -450,7 +465,7 @@ function copyPaymentAmount() {
             <!-- 支付信息 -->
             <div class="space-y-4">
               <!-- 微信支付提示 -->
-              <template v-if="paymentData.payment_data.code_url || paymentData.payment_url">
+              <template v-if="isWechatPay">
                 <div class="flex items-center justify-between p-3 bg-green-50 rounded-xl">
                   <span class="text-gray-600">支付方式</span>
                   <span class="font-bold text-green-600">微信支付</span>
