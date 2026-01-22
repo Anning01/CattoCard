@@ -191,6 +191,13 @@ class WechatProvider(PaymentProvider):
                     success=True, payment_url=pay_data.get("code_url"), payment_data=pay_data
                 )
             else:
+                if code == 400 and message.get("code") == "ORDERPAID":
+                    # 查询订单状态是否是未支付，如果是则触发完成流程
+                    pending = await get_pending_order(order_no)
+                    if pending:
+                        await self.verify_payment(order_no, pending)
+                    return PaymentResult(success=False, error_message="该订单已支付")
+
                 return PaymentResult(success=False, error_message=f"微信下单失败: {message}")
 
         except Exception as e:
