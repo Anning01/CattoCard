@@ -191,7 +191,9 @@ class WechatProvider(PaymentProvider):
                     success=True, payment_url=pay_data.get("code_url"), payment_data=pay_data
                 )
             else:
-                if code == 400 and message.get("code") == "ORDERPAID":
+                pay_data = json.loads(message)
+
+                if code == 400 and pay_data.get("code") == "ORDERPAID":
                     # 查询订单状态是否是未支付，如果是则触发完成流程
                     pending = await get_pending_order(order_no)
                     if pending:
