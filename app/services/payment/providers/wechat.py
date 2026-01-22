@@ -112,8 +112,7 @@ class WechatProvider(PaymentProvider):
                 apiv3_key=self.apiv3_key,
                 appid=self.appid,
                 notify_url=self.notify_url,
-                cert_dir=None,
-                logger=logger  # 如果 SDK 支持传入 logger
+                cert_dir=None
             )
 
             self._is_started = True
