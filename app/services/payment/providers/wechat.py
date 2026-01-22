@@ -1,6 +1,8 @@
 import json
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any
+from forex_python.converter import CurrencyRates
 from app.services.payment import PaymentProvider
 from app.services.payment.base import PaymentResult
 from app.services.payment.registry import register_provider
@@ -15,6 +17,31 @@ from wechatpayv3 import WeChatPay
 from wechatpayv3 import WeChatPayType
 
 from app.utils.redis_client import get_pending_order, remove_pending_order
+
+
+def convert_to_cny(amount: str, from_currency: str) -> str:
+    """
+    将金额转换为人民币（CNY）
+
+    Args:
+        amount: 原始金额（字符串）
+        from_currency: 原始货币代码，如 USD, EUR 等
+
+    Returns:
+        转换后的 CNY 金额（字符串）
+    """
+    if from_currency.upper() == "CNY":
+        return amount
+
+    try:
+        c = CurrencyRates()
+        # forex-python 返回的是 1 单位源货币等于多少 CNY
+        rate = c.get_rate(from_currency.upper(), "CNY")
+        cny_amount = Decimal(amount) * Decimal(str(rate))
+        return f"{cny_amount:.2f}"
+    except Exception as e:
+        logger.warning(f"货币转换失败 ({from_currency} -> CNY): {e}")
+        return amount
 
 
 
@@ -133,15 +160,18 @@ class WechatProvider(PaymentProvider):
             return PaymentResult(success=False, error_message="微信支付服务未启动")
 
         try:
-            # 2. 转换金额 (假设 amount 是字符串类型的元，微信通常需要分)
-            amount_fen = int(float(amount) * 100)
+            # 2. 转换为人民币（微信只支持 CNY）
+            amount_cny = convert_to_cny(amount, currency)
 
-            # 3. 调用 SDK (注意：如果 wechatpayv3 是同步库，建议在 async 环境中放入线程池执行，防止阻塞)
+            # 3. 转换金额为分（微信支付单位）
+            amount_fen = int(float(amount_cny) * 100)
+
+            # 4. 调用 SDK (注意：如果 wechatpayv3 是同步库，建议在 async 环境中放入线程池执行，防止阻塞)
             # 这里假设直接调用
             code, message = self.wechatpay_client.pay(
                 description=f"订单-{order_no}",
                 out_trade_no=order_no,
-                amount={"total": amount_fen, "currency": currency},
+                amount={"total": amount_fen, "currency": "CNY"},
                 pay_type=WeChatPayType.NATIVE  # 示例使用 Native 扫码
             )
 

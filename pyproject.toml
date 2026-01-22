@@ -21,6 +21,7 @@ dependencies = [
     "httpx>=0.28.1",
     "redis>=7.1.0",
     "wechatpayv3>=2.0.1",
+    "forex-python>=1.9.2",
 ]
 
 [project.optional-dependencies]
