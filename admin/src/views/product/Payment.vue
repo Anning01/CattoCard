@@ -278,6 +278,14 @@ async function handleSubmit() {
     }
   }
 
+  // 确保 provider_id 被正确设置
+  if (selectedProvider.value && !form.value.meta_data?.provider_id) {
+    form.value.meta_data = {
+      ...form.value.meta_data,
+      provider_id: selectedProvider.value,
+    }
+  }
+
   try {
     if (form.value.id) {
       await put(`/admin/products/payment-methods/${form.value.id}`, form.value)
