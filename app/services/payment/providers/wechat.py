@@ -17,6 +17,35 @@ from wechatpayv3 import WeChatPayType
 from app.utils.redis_client import get_pending_order, remove_pending_order
 
 
+
+def load_weird_shaped_key(weird_key_str: str) -> str:
+    """
+    能够处理：倒三角形、带空格、带换行、缺头尾的任何私钥字符串
+    """
+    # 1. 【核心步骤】清洗所有空白字符
+    # split() 不带参数时，会自动去除所有换行符(\n)、空格( )、制表符(\t)
+    # 然后用 join 将它们连成一整行纯净的 Base64 字符串
+    clean_key = "".join(weird_key_str.split())
+
+    # 2. 如果字符串里包含了头尾标识，先去掉（防止重复添加）
+    clean_key = clean_key.replace("-----BEGINPRIVATEKEY-----", "") \
+        .replace("-----ENDPRIVATEKEY-----", "")
+
+    # 3. 【重组】按标准 PEM 格式组装（每64字符换行，但这步其实可选，关键是头尾要独占一行）
+    # 为了模拟 open() 读取的效果，我们还是做一个切分
+    chunk_size = 64
+    content_lines = [clean_key[i:i + chunk_size] for i in range(0, len(clean_key), chunk_size)]
+
+    # 4. 拼接最终结果
+    final_pem = (
+            "-----BEGIN PRIVATE KEY-----\n" +
+            "\n".join(content_lines) +
+            "\n-----END PRIVATE KEY-----"
+    )
+
+    return final_pem
+
+
 @register_provider
 class WechatProvider(PaymentProvider):
     """微信支付提供者"""
@@ -78,7 +107,7 @@ class WechatProvider(PaymentProvider):
             self.wechatpay_client = WeChatPay(
                 wechatpay_type=WeChatPayType.NATIVE,  # 或 JSAPI，根据需求动态传参
                 mchid=self.mchid,
-                private_key=self.apiclient_key,
+                private_key=load_weird_shaped_key(self.apiclient_key),
                 cert_serial_no=self.cert_serial_no,
                 apiv3_key=self.apiv3_key,
                 appid=self.appid,
