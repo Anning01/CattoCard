@@ -6,7 +6,6 @@ from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.logger import logger
 from app.core.response import PaginatedData, ResponseModel, success_response
 from app.models.order import Order, OrderLog
-from app.models.product import InventoryItem
 from app.schemas.order import (
     OrderDetailResponse,
     OrderItemResponse,
@@ -111,7 +110,9 @@ async def update_order(order_id: int, data: OrderUpdate):
     return success_response(data=response_data)
 
 
-@router.post("/{order_id}/deliver", response_model=ResponseModel, summary="订单发货（虚拟商品自动发货）")
+@router.post(
+    "/{order_id}/deliver", response_model=ResponseModel, summary="订单发货（虚拟商品自动发货）"
+)
 async def deliver_order(order_id: int, remark: str | None = None, item_ids: str | None = None):
     """
     虚拟商品订单发货：自动从库存中扣除卡密

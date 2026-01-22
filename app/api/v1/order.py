@@ -8,7 +8,6 @@ from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.logger import logger
 from app.core.response import ResponseModel, success_response
 from app.models.order import Order, OrderItem, OrderLog
-from app.schemas.order import OrderStatus
 from app.models.product import PaymentMethod, Product
 from app.schemas.order import (
     OrderCreate,
@@ -16,6 +15,7 @@ from app.schemas.order import (
     OrderItemResponse,
     OrderListResponse,
     OrderQueryByEmail,
+    OrderStatus,
 )
 from app.schemas.product import ProductType
 from app.services.delivery import DeliveryService
@@ -43,13 +43,21 @@ async def create_order(data: OrderCreate):
 
         # 虚拟商品检查InventoryItem库存，实体商品检查stock
         if product.product_type == ProductType.VIRTUAL:
-            is_sufficient, available = await DeliveryService.check_virtual_stock(product.id, item.quantity)
+            is_sufficient, available = await DeliveryService.check_virtual_stock(
+                product.id, item.quantity
+            )
             if not is_sufficient:
-                logger.warning(f"虚拟商品库存不足: {product.name}, available={available}, need={item.quantity}")
-                raise BadRequestException(message=f"商品 {product.name} 库存不足（可用: {available}）")
+                logger.warning(
+                    f"虚拟商品库存不足: {product.name}, available={available}, need={item.quantity}"
+                )
+                raise BadRequestException(
+                    message=f"商品 {product.name} 库存不足（可用: {available}）"
+                )
         else:
             if product.stock < item.quantity:
-                logger.warning(f"实体商品库存不足: {product.name}, stock={product.stock}, need={item.quantity}")
+                logger.warning(
+                    f"实体商品库存不足: {product.name}, stock={product.stock}, need={item.quantity}"
+                )
                 raise BadRequestException(message=f"商品 {product.name} 库存不足")
 
         await product.fetch_related("payment_methods")

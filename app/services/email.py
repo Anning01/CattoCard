@@ -85,14 +85,14 @@ class EmailService:
             payment_info = f"""
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
                 <h3 style="margin: 0 0 15px 0; color: #333;">支付信息</h3>
-                <p><strong>支付金额：</strong>{payment_data.get('amount', total_price)} {payment_data.get('currency', 'USDT')}</p>
+                <p><strong>支付金额：</strong>{payment_data.get("amount", total_price)} {payment_data.get("currency", "USDT")}</p>
                 <p><strong>收款地址：</strong></p>
                 <p style="background: #fff; padding: 10px; border-radius: 4px; word-break: break-all; font-family: monospace;">
-                    {payment_data.get('wallet_address')}
+                    {payment_data.get("wallet_address")}
                 </p>
-                <p><strong>网络：</strong>{payment_data.get('network', 'TRC20')}</p>
+                <p><strong>网络：</strong>{payment_data.get("network", "TRC20")}</p>
                 <p style="color: #dc3545; font-size: 14px;">
-                    ⚠️ 请务必转账精确金额 {payment_data.get('amount', total_price)} USDT，否则可能无法自动确认支付
+                    ⚠️ 请务必转账精确金额 {payment_data.get("amount", total_price)} USDT，否则可能无法自动确认支付
                 </p>
             </div>
             """

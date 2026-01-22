@@ -52,12 +52,20 @@ class PlatformConfigResponse(PlatformConfigBase, IDSchema, TimestampSchema):
 class EmailConfigBase(BaseSchema):
     """邮件配置基础"""
 
-    smtp_host: str = Field(..., max_length=255, description="SMTP服务器地址", examples=["smtp.gmail.com"])
+    smtp_host: str = Field(
+        ..., max_length=255, description="SMTP服务器地址", examples=["smtp.gmail.com"]
+    )
     smtp_port: int = Field(587, ge=1, le=65535, description="SMTP端口", examples=[587, 465, 25])
-    smtp_user: str = Field(..., max_length=255, description="SMTP用户名/邮箱", examples=["user@gmail.com"])
+    smtp_user: str = Field(
+        ..., max_length=255, description="SMTP用户名/邮箱", examples=["user@gmail.com"]
+    )
     smtp_password: str = Field(..., max_length=255, description="SMTP密码或应用专用密码")
-    from_email: str = Field(..., max_length=255, description="发件人邮箱地址", examples=["noreply@example.com"])
-    from_name: str | None = Field(None, max_length=100, description="发件人显示名称", examples=["Card Store"])
+    from_email: str = Field(
+        ..., max_length=255, description="发件人邮箱地址", examples=["noreply@example.com"]
+    )
+    from_name: str | None = Field(
+        None, max_length=100, description="发件人显示名称", examples=["Card Store"]
+    )
     use_tls: bool = Field(True, description="是否使用TLS加密")
 
 
@@ -161,7 +169,9 @@ class BannerBase(BaseSchema):
         description="点击跳转链接",
         examples=["https://example.com/promotion"],
     )
-    title: str | None = Field(None, max_length=100, description="Banner标题/Alt文本", examples=["新年促销"])
+    title: str | None = Field(
+        None, max_length=100, description="Banner标题/Alt文本", examples=["新年促销"]
+    )
     sort_order: int = Field(0, ge=0, description="排序值，越小越靠前")
     is_active: bool = Field(True, description="是否启用")
 
@@ -192,8 +202,12 @@ class BannerResponse(BannerBase, IDSchema, TimestampSchema):
 class FooterLinkBase(BaseSchema):
     """底部链接基础"""
 
-    title: str = Field(..., max_length=100, description="链接标题", examples=["用户协议", "友情链接"])
-    url: str = Field(..., max_length=500, description="链接地址", examples=["https://example.com/terms"])
+    title: str = Field(
+        ..., max_length=100, description="链接标题", examples=["用户协议", "友情链接"]
+    )
+    url: str = Field(
+        ..., max_length=500, description="链接地址", examples=["https://example.com/terms"]
+    )
     link_type: FooterLinkType = Field(
         FooterLinkType.FRIEND_LINK,
         description="链接类型: agreement=协议, friend_link=友链",

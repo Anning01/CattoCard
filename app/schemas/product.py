@@ -45,7 +45,9 @@ class CategoryBase(BaseSchema):
         examples=["sim-card"],
         pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$",
     )
-    description: str | None = Field(None, max_length=500, description="分类描述", examples=["各类SIM卡"])
+    description: str | None = Field(
+        None, max_length=500, description="分类描述", examples=["各类SIM卡"]
+    )
     icon: str | None = Field(
         None,
         max_length=500,
@@ -114,7 +116,9 @@ class PaymentMethodBase(BaseSchema):
         description="手续费值（小于1为百分比，大于等于1为固定金额）",
         examples=["0.35", "1.00"],
     )
-    description: str | None = Field(None, description="支付方式说明", examples=["支持花呗、信用卡支付"])
+    description: str | None = Field(
+        None, description="支付方式说明", examples=["支持花呗、信用卡支付"]
+    )
     meta_data: dict[str, Any] = Field(
         default_factory=dict,
         description="支付配置元数据（如API密钥、商户ID等）",
@@ -258,7 +262,9 @@ class ProductIntroResponse(ProductIntroBase, IDSchema, TimestampSchema):
 class ProductBase(BaseSchema):
     """商品基础"""
 
-    name: str = Field(..., max_length=255, description="商品名称", examples=["澳门 | 电信 | 大湾区预付卡（蓝卡）"])
+    name: str = Field(
+        ..., max_length=255, description="商品名称", examples=["澳门 | 电信 | 大湾区预付卡（蓝卡）"]
+    )
     slug: str = Field(
         ...,
         max_length=255,
@@ -333,14 +339,18 @@ class ProductDetailResponse(ProductListResponse):
     images: list[ProductImageResponse] = Field(default_factory=list, description="图片列表")
     tags: list[ProductTagResponse] = Field(default_factory=list, description="标签列表")
     intros: list[ProductIntroResponse] = Field(default_factory=list, description="商品介绍列表")
-    payment_methods: list[PaymentMethodResponse] = Field(default_factory=list, description="支持的支付方式")
+    payment_methods: list[PaymentMethodResponse] = Field(
+        default_factory=list, description="支持的支付方式"
+    )
 
 
 # ==================== 库存项 ====================
 class InventoryItemBase(BaseSchema):
     """库存项基础"""
 
-    content: str = Field(..., description="库存内容（如卡密、激活码等）", examples=["XXXX-XXXX-XXXX-XXXX"])
+    content: str = Field(
+        ..., description="库存内容（如卡密、激活码等）", examples=["XXXX-XXXX-XXXX-XXXX"]
+    )
 
 
 class InventoryItemCreate(InventoryItemBase):

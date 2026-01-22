@@ -1,22 +1,20 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
-from forex_python.converter import CurrencyRates
-from app.services.payment import PaymentProvider
-from app.services.payment.base import PaymentResult
-from app.services.payment.registry import register_provider
-from app.core.logger import logger
 
+from forex_python.converter import CurrencyRates
+from wechatpayv3 import WeChatPay, WeChatPayType
+
+from app.core.logger import logger
 from app.models.order import Order, OrderLog
 from app.schemas.order import OrderStatus
 from app.services.delivery import DeliveryService
 from app.services.email import EmailService
-
-from wechatpayv3 import WeChatPay
-from wechatpayv3 import WeChatPayType
-
-from app.utils.redis_client import get_pending_order, remove_pending_order
+from app.services.payment import PaymentProvider
+from app.services.payment.base import PaymentResult
+from app.services.payment.registry import register_provider
+from app.utils.redis_client import add_pending_order, get_pending_order, remove_pending_order
 
 
 def convert_to_cny(amount: str, from_currency: str) -> str:
@@ -44,7 +42,6 @@ def convert_to_cny(amount: str, from_currency: str) -> str:
         return amount
 
 
-
 def load_weird_shaped_key(weird_key_str: str) -> str:
     """
     能够处理：倒三角形、带空格、带换行、缺头尾的任何私钥字符串
@@ -55,19 +52,18 @@ def load_weird_shaped_key(weird_key_str: str) -> str:
     clean_key = "".join(weird_key_str.split())
 
     # 2. 如果字符串里包含了头尾标识，先去掉（防止重复添加）
-    clean_key = clean_key.replace("-----BEGINPRIVATEKEY-----", "") \
-        .replace("-----ENDPRIVATEKEY-----", "")
+    clean_key = clean_key.replace("-----BEGINPRIVATEKEY-----", "").replace(
+        "-----ENDPRIVATEKEY-----", ""
+    )
 
     # 3. 【重组】按标准 PEM 格式组装（每64字符换行，但这步其实可选，关键是头尾要独占一行）
     # 为了模拟 open() 读取的效果，我们还是做一个切分
     chunk_size = 64
-    content_lines = [clean_key[i:i + chunk_size] for i in range(0, len(clean_key), chunk_size)]
+    content_lines = [clean_key[i : i + chunk_size] for i in range(0, len(clean_key), chunk_size)]
 
     # 4. 拼接最终结果
     final_pem = (
-            "-----BEGIN PRIVATE KEY-----\n" +
-            "\n".join(content_lines) +
-            "\n-----END PRIVATE KEY-----"
+        "-----BEGIN PRIVATE KEY-----\n" + "\n".join(content_lines) + "\n-----END PRIVATE KEY-----"
     )
 
     return final_pem
@@ -76,9 +72,9 @@ def load_weird_shaped_key(weird_key_str: str) -> str:
 @register_provider
 class WechatProvider(PaymentProvider):
     """微信支付提供者"""
+
     provider_id = "wechat"
     provider_name = "微信支付"
-
 
     def __init__(self, config: dict[str, Any]):
         super().__init__(config)
@@ -139,7 +135,7 @@ class WechatProvider(PaymentProvider):
                 apiv3_key=self.apiv3_key,
                 appid=self.appid,
                 notify_url=self.notify_url,
-                cert_dir=None
+                cert_dir=None,
             )
 
             self._is_started = True
@@ -166,22 +162,32 @@ class WechatProvider(PaymentProvider):
             # 3. 转换金额为分（微信支付单位）
             amount_fen = int(float(amount_cny) * 100)
 
-            # 4. 调用 SDK (注意：如果 wechatpayv3 是同步库，建议在 async 环境中放入线程池执行，防止阻塞)
-            # 这里假设直接调用
+            # 4. 调用 SDK
             code, message = self.wechatpay_client.pay(
                 description=f"订单-{order_no}",
                 out_trade_no=order_no,
                 amount={"total": amount_fen},
-                pay_type=WeChatPayType.NATIVE  # 示例使用 Native 扫码
+                pay_type=WeChatPayType.NATIVE,  # 使用 Native 扫码
             )
 
             if code == 200:
                 # 解析 message 中的 code_url (针对 Native 支付)
                 pay_data = json.loads(message)
+
+                payment_data = {
+                    "order_no": order_no,
+                    "amount": amount_cny,
+                    "original_amount": amount,
+                    "currency": "CNY",
+                    "network": "微信支付",
+                    **pay_data,
+                }
+
+                # 记录待支付订单
+                await add_pending_order(order_no, self.provider_id, payment_data)
+
                 return PaymentResult(
-                    success=True,
-                    payment_url=pay_data.get('code_url'),
-                    payment_data=pay_data
+                    success=True, payment_url=pay_data.get("code_url"), payment_data=pay_data
                 )
             else:
                 return PaymentResult(success=False, error_message=f"微信下单失败: {message}")
@@ -193,7 +199,6 @@ class WechatProvider(PaymentProvider):
     async def verify_payment(self, order_no: str, payment_data: dict) -> bool:
         pending = await get_pending_order(order_no)
         return pending is None  # 如果待支付记录已删除，说明支付已完成
-
 
     async def handle_callback(self, data: dict) -> dict:
         """
@@ -265,11 +270,11 @@ class WechatProvider(PaymentProvider):
 
         # 7. 更新订单状态为已支付
         order.status = OrderStatus.PAID
-        order.paid_at = datetime.now(timezone.utc)
+        order.paid_at = datetime.now(UTC)
         order.payment_data = {
             "provider": self.provider_id,
             "transaction_id": transaction_id,
-            **result
+            **result,
         }
         await order.save()
 
@@ -309,7 +314,5 @@ class WechatProvider(PaymentProvider):
             "success": True,
             "message": "支付成功",
             "order_no": order_no,
-            "transaction_id": transaction_id
+            "transaction_id": transaction_id,
         }
-
-

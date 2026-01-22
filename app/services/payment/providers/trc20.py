@@ -2,7 +2,8 @@
 
 import asyncio
 import time
-from decimal import Decimal, ROUND_DOWN
+from datetime import UTC
+from decimal import ROUND_DOWN, Decimal
 from typing import Any
 
 import httpx
@@ -137,7 +138,7 @@ class TRC20Provider(PaymentProvider):
         # 尝试不同的后缀
         for i in range(1, 10000):
             # 生成后缀 0.0001, 0.0002, ...
-            suffix = Decimal(i) / Decimal(10 ** self.amount_precision)
+            suffix = Decimal(i) / Decimal(10**self.amount_precision)
             unique_amount = (base + suffix).quantize(
                 Decimal(10) ** -self.amount_precision, rounding=ROUND_DOWN
             )
@@ -177,11 +178,13 @@ class TRC20Provider(PaymentProvider):
                 break
             except Exception as e:
                 logger.error(f"TRC20 扫描出错: {e}")
-                await add_scan_log({
-                    "time": time.time(),
-                    "type": "error",
-                    "message": str(e),
-                })
+                await add_scan_log(
+                    {
+                        "time": time.time(),
+                        "type": "error",
+                        "message": str(e),
+                    }
+                )
 
             # 等待下一次扫描
             await asyncio.sleep(self.scan_interval)
@@ -214,12 +217,14 @@ class TRC20Provider(PaymentProvider):
 
                 # 获取金额（USDT 有 6 位小数）
                 value = tx.get("value", "0")
-                amount = str(Decimal(value) / Decimal(10 ** 6))
+                amount = str(Decimal(value) / Decimal(10**6))
 
                 # 查找匹配的订单
                 order_no = await get_order_by_trc20_amount(amount)
                 if order_no:
-                    logger.info(f"TRC20 匹配到订单: order_no={order_no}, amount={amount}, tx_id={tx_id}")
+                    logger.info(
+                        f"TRC20 匹配到订单: order_no={order_no}, amount={amount}, tx_id={tx_id}"
+                    )
                     matched_count += 1
 
                     # 标记交易已处理
@@ -229,21 +234,25 @@ class TRC20Provider(PaymentProvider):
                     await self._complete_payment(order_no, tx_id, amount)
 
             # 记录扫描日志
-            await add_scan_log({
-                "time": time.time(),
-                "type": "scan",
-                "duration": time.time() - scan_start,
-                "scanned": scanned_count,
-                "matched": matched_count,
-            })
+            await add_scan_log(
+                {
+                    "time": time.time(),
+                    "type": "scan",
+                    "duration": time.time() - scan_start,
+                    "scanned": scanned_count,
+                    "matched": matched_count,
+                }
+            )
 
         except Exception as e:
             logger.error(f"TRC20 扫描交易失败: {e}")
-            await add_scan_log({
-                "time": time.time(),
-                "type": "error",
-                "message": str(e),
-            })
+            await add_scan_log(
+                {
+                    "time": time.time(),
+                    "type": "error",
+                    "message": str(e),
+                }
+            )
 
     async def _fetch_trc20_transfers(self) -> list[dict]:
         """获取 TRC20 转账记录"""
@@ -267,7 +276,7 @@ class TRC20Provider(PaymentProvider):
 
     async def _complete_payment(self, order_no: str, tx_id: str, amount: str) -> None:
         """完成支付处理"""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from app.models.order import Order, OrderLog
         from app.schemas.order import OrderStatus
@@ -293,7 +302,7 @@ class TRC20Provider(PaymentProvider):
 
             # 更新订单
             order.status = OrderStatus.PAID
-            order.paid_at = datetime.now(timezone.utc)
+            order.paid_at = datetime.now(UTC)
             order.payment_data = {
                 "provider": self.provider_id,
                 "tx_id": tx_id,
@@ -334,23 +343,27 @@ class TRC20Provider(PaymentProvider):
                     logger.warning(f"虚拟商品自动发货失败: order_no={order_no}, message={message}")
 
             # 记录到扫描日志
-            await add_scan_log({
-                "time": time.time(),
-                "type": "payment_success",
-                "order_no": order_no,
-                "tx_id": tx_id,
-                "amount": amount,
-            })
+            await add_scan_log(
+                {
+                    "time": time.time(),
+                    "type": "payment_success",
+                    "order_no": order_no,
+                    "tx_id": tx_id,
+                    "amount": amount,
+                }
+            )
 
         except Exception as e:
             logger.error(f"完成支付处理失败: order_no={order_no}, error={e}")
-            await add_scan_log({
-                "time": time.time(),
-                "type": "payment_error",
-                "order_no": order_no,
-                "tx_id": tx_id,
-                "error": str(e),
-            })
+            await add_scan_log(
+                {
+                    "time": time.time(),
+                    "type": "payment_error",
+                    "order_no": order_no,
+                    "tx_id": tx_id,
+                    "error": str(e),
+                }
+            )
 
 
 # ==================== 测试工具 ====================
@@ -372,11 +385,11 @@ async def test_fetch_transactions(wallet_address: str, api_key: str = "") -> Non
         "contract_address": usdt_contract,
     }
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"钱包地址: {wallet_address}")
     print(f"API Key: {'已配置' if api_key else '未配置'}")
     print(f"USDT 合约: {usdt_contract}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     async with httpx.AsyncClient(timeout=30) as client:
         try:

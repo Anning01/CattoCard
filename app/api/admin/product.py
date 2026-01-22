@@ -34,9 +34,9 @@ from app.schemas.product import (
     ProductTagResponse,
     ProductUpdate,
 )
-from app.utils.common import paginate
-from app.utils.cache import get_tag_suggestions, update_tag_suggestions
 from app.services.delivery import DeliveryService
+from app.utils.cache import get_tag_suggestions, update_tag_suggestions
+from app.utils.common import paginate
 
 router = APIRouter()
 
@@ -160,24 +160,28 @@ async def delete_payment_method(method_id: int):
     return success_response(message="删除成功")
 
 
-@router.get("/payment-methods/trc20/scan-logs", response_model=ResponseModel, summary="获取TRC20扫描日志")
+@router.get(
+    "/payment-methods/trc20/scan-logs", response_model=ResponseModel, summary="获取TRC20扫描日志"
+)
 async def get_trc20_scan_logs(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
 ):
     """获取 TRC20 支付扫描日志"""
     from app.utils.redis_client import get_scan_logs, get_scan_logs_count
-    
+
     logger.info(f"获取TRC20扫描日志: limit={limit}, offset={offset}")
     logs = await get_scan_logs(limit=limit, offset=offset)
     total = await get_scan_logs_count()
-    
-    return success_response(data={
-        "logs": logs,
-        "total": total,
-        "limit": limit,
-        "offset": offset,
-    })
+
+    return success_response(
+        data={
+            "logs": logs,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
+    )
 
 
 # ==================== 商品管理 ====================
@@ -207,7 +211,9 @@ async def _get_product_detail(product_id: int) -> ProductDetailResponse:
         images=[ProductImageResponse.model_validate(img) for img in product.images],
         tags=[ProductTagResponse.model_validate(tag) for tag in product.tags],
         intros=[ProductIntroResponse.model_validate(intro) for intro in product.intros],
-        payment_methods=[PaymentMethodResponse.model_validate(pm) for pm in product.payment_methods],
+        payment_methods=[
+            PaymentMethodResponse.model_validate(pm) for pm in product.payment_methods
+        ],
     )
 
 
@@ -290,7 +296,9 @@ async def create_product(data: ProductCreate):
             raise BadRequestException(message=f"支付方式ID {pm_id} 不存在")
         payment_methods.append(pm)
 
-    product_data = data.model_dump(exclude={"payment_method_ids", "images", "tags", "intros", "inventory_contents"})
+    product_data = data.model_dump(
+        exclude={"payment_method_ids", "images", "tags", "intros", "inventory_contents"}
+    )
     product = await Product.create(**product_data)
 
     await product.payment_methods.add(*payment_methods)
@@ -329,7 +337,9 @@ async def update_product(product_id: int, data: ProductUpdate):
     if not product:
         raise NotFoundException(message="商品不存在")
 
-    update_data = data.model_dump(exclude_unset=True, exclude={"payment_method_ids", "images", "tags", "intros"})
+    update_data = data.model_dump(
+        exclude_unset=True, exclude={"payment_method_ids", "images", "tags", "intros"}
+    )
 
     if "slug" in update_data:
         exists = await Product.filter(slug=update_data["slug"]).exclude(id=product_id).exists()
@@ -390,7 +400,9 @@ async def delete_product(product_id: int):
 
 
 # ==================== 库存管理(虚拟商品) ====================
-@router.get("/{product_id}/inventory/stats", response_model=ResponseModel, summary="获取虚拟商品库存统计")
+@router.get(
+    "/{product_id}/inventory/stats", response_model=ResponseModel, summary="获取虚拟商品库存统计"
+)
 async def get_inventory_stats(product_id: int):
     """获取虚拟商品的库存统计（可用数量、已售数量）"""
     logger.info(f"获取库存统计: product_id={product_id}")
@@ -402,11 +414,13 @@ async def get_inventory_stats(product_id: int):
     sold = await InventoryItem.filter(product_id=product_id, is_sold=True).count()
     total = available + sold
 
-    return success_response(data={
-        "available": available,
-        "sold": sold,
-        "total": total,
-    })
+    return success_response(
+        data={
+            "available": available,
+            "sold": sold,
+            "total": total,
+        }
+    )
 
 
 @router.get("/{product_id}/inventory", response_model=ResponseModel, summary="获取商品库存")
@@ -447,7 +461,9 @@ async def add_inventory(product_id: int, data: InventoryItemBatchCreate):
     return success_response(message=f"成功添加 {len(data.contents)} 条库存")
 
 
-@router.delete("/{product_id}/inventory/{item_id}", response_model=ResponseModel, summary="删除库存项")
+@router.delete(
+    "/{product_id}/inventory/{item_id}", response_model=ResponseModel, summary="删除库存项"
+)
 async def delete_inventory(product_id: int, item_id: int):
     logger.info(f"删除库存项: product_id={product_id}, item_id={item_id}")
     item = await InventoryItem.filter(id=item_id, product_id=product_id).first()
@@ -510,7 +526,9 @@ async def update_product_intro(product_id: int, intro_id: int, data: ProductIntr
     return success_response(data=ProductIntroResponse.model_validate(intro))
 
 
-@router.delete("/{product_id}/intros/{intro_id}", response_model=ResponseModel, summary="删除商品介绍")
+@router.delete(
+    "/{product_id}/intros/{intro_id}", response_model=ResponseModel, summary="删除商品介绍"
+)
 async def delete_product_intro(product_id: int, intro_id: int):
     """删除商品介绍"""
     logger.info(f"删除商品介绍: product_id={product_id}, intro_id={intro_id}")

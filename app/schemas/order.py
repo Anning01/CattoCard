@@ -56,7 +56,9 @@ class OrderItemResponse(IDSchema):
 class OrderCreate(BaseSchema):
     """创建订单"""
 
-    email: EmailStr = Field(..., description="下单邮箱（用于接收订单通知）", examples=["user@example.com"])
+    email: EmailStr = Field(
+        ..., description="下单邮箱（用于接收订单通知）", examples=["user@example.com"]
+    )
     items: list[OrderItemCreate] = Field(..., min_length=1, description="订单商品列表")
     payment_method_id: int = Field(..., description="支付方式ID")
     currency: str = Field("USD", max_length=10, description="结算币种", examples=["USD", "CNY"])
@@ -134,7 +136,9 @@ class PaymentInitResponse(BaseSchema):
     """支付初始化响应"""
 
     payment_url: str | None = Field(None, description="支付跳转URL")
-    payment_data: dict[str, Any] = Field(default_factory=dict, description="支付相关数据（如二维码内容等）")
+    payment_data: dict[str, Any] = Field(
+        default_factory=dict, description="支付相关数据（如二维码内容等）"
+    )
     expires_in: int = Field(900, description="支付过期时间（秒），默认15分钟")
 
 

@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from app.core.response import ResponseModel, success_response
 from app.core.logger import logger
+from app.core.response import ResponseModel, success_response
 from app.services.payment.registry import get_registry
 from app.utils.redis_client import (
     get_all_pending_orders,
@@ -24,12 +24,14 @@ async def get_payment_providers():
         provider_class = registry.get_provider_class(provider_id)
         active_provider = registry.get_active_provider(provider_id)
 
-        providers.append({
-            "provider_id": provider_id,
-            "name": provider_class.provider_name if provider_class else provider_id,
-            "is_active": active_provider is not None,
-            "is_started": active_provider.is_started if active_provider else False,
-        })
+        providers.append(
+            {
+                "provider_id": provider_id,
+                "name": provider_class.provider_name if provider_class else provider_id,
+                "is_active": active_provider is not None,
+                "is_started": active_provider.is_started if active_provider else False,
+            }
+        )
 
     return success_response(data=providers)
 
@@ -51,12 +53,14 @@ async def get_payment_scan_logs(limit: int = 50, offset: int = 0):
     logs = await get_scan_logs(limit=limit, offset=offset)
     total = await get_scan_logs_count()
 
-    return success_response(data={
-        "items": logs,
-        "total": total,
-        "limit": limit,
-        "offset": offset,
-    })
+    return success_response(
+        data={
+            "items": logs,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }
+    )
 
 
 @router.post("/reload", response_model=ResponseModel, summary="重新加载支付提供者")

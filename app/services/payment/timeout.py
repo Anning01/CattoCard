@@ -1,10 +1,9 @@
 """订单超时处理任务"""
 
 import asyncio
-import time
 
 from app.core.logger import logger
-from app.models.order import Order, OrderItem, OrderLog
+from app.models.order import Order, OrderLog
 from app.models.product import Product
 from app.schemas.order import OrderStatus
 from app.utils.redis_client import (

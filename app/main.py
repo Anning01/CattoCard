@@ -23,7 +23,6 @@ from app.core.handlers import (
     validation_exception_handler,
 )
 from app.core.logger import logger, setup_logging
-from app.core.response import ResponseModel
 
 settings = get_settings()
 
@@ -107,25 +106,19 @@ responses = {
     200: {
         "description": "成功响应",
         "content": {
-            "application/json": {
-                "example": {"code": 200, "message": "success", "data": {}}
-            }
+            "application/json": {"example": {"code": 200, "message": "success", "data": {}}}
         },
     },
     400: {
         "description": "请求参数错误 (客户端错误)",
         "content": {
-            "application/json": {
-                "example": {"code": 400, "message": "请求参数错误", "data": None}
-            }
+            "application/json": {"example": {"code": 400, "message": "请求参数错误", "data": None}}
         },
     },
     404: {
         "description": "资源不存在 (客户端错误)",
         "content": {
-            "application/json": {
-                "example": {"code": 404, "message": "资源不存在", "data": None}
-            }
+            "application/json": {"example": {"code": 404, "message": "资源不存在", "data": None}}
         },
     },
     422: {
@@ -189,7 +182,7 @@ app = FastAPI(
     responses=responses,
     openapi_url="/api/openapi.json",
     docs_url="/api/docs",
-    redoc_url="/api/redoc"
+    redoc_url="/api/redoc",
 )
 
 # 注册异常处理器

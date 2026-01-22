@@ -40,9 +40,7 @@ class PaymentMethod(BaseModel):
 
     name = fields.CharField(max_length=100, description="支付名称")
     icon = fields.CharField(max_length=500, null=True, description="支付图标")
-    fee_type = fields.CharEnumField(
-        FeeType, default=FeeType.PERCENTAGE, description="手续费类型"
-    )
+    fee_type = fields.CharEnumField(FeeType, default=FeeType.PERCENTAGE, description="手续费类型")
     fee_value = fields.DecimalField(
         max_digits=10, decimal_places=4, default=Decimal("0"), description="手续费值"
     )
@@ -153,7 +151,9 @@ class ProductIntro(BaseModel):
         on_delete=fields.CASCADE,
         description="关联商品",
     )
-    title = fields.CharField(max_length=100, description="介绍标题(如: 商品信息/商品优势/使用教程/售后说明)")
+    title = fields.CharField(
+        max_length=100, description="介绍标题(如: 商品信息/商品优势/使用教程/售后说明)"
+    )
     content = fields.TextField(description="介绍内容(富文本HTML)")
     icon = fields.CharField(max_length=255, null=True, description="图标(可选)")
     sort_order = fields.IntField(default=0, description="排序")

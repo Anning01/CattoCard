@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime
 
 from app.core.logger import logger
-from app.models.order import Order, OrderItem, OrderLog
+from app.models.order import Order, OrderLog
 from app.models.platform import PlatformConfig
 from app.models.product import InventoryItem
 from app.schemas.order import OrderStatus
@@ -130,7 +130,9 @@ class DeliveryService:
             )
         )
 
-        logger.info(f"订单发货成功: order_no={order.order_no}, delivered={delivered_count}, all_done={all_delivered}")
+        logger.info(
+            f"订单发货成功: order_no={order.order_no}, delivered={delivered_count}, all_done={all_delivered}"
+        )
         return True, "发货成功", delivered_count
 
     @staticmethod

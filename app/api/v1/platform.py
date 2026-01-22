@@ -6,11 +6,11 @@ from app.core.exceptions import NotFoundException
 from app.core.logger import logger
 from app.core.response import ResponseModel, success_response
 from app.models.platform import Announcement, Banner, FooterLink, PlatformConfig
-from app.schemas.platform import FooterLinkType
 from app.schemas.platform import (
     AnnouncementResponse,
     BannerResponse,
     FooterLinkResponse,
+    FooterLinkType,
 )
 
 router = APIRouter()
@@ -63,7 +63,9 @@ async def get_popup_announcement():
     return success_response(data=None)
 
 
-@router.get("/announcements/{announcement_id}", response_model=ResponseModel, summary="获取公告详情")
+@router.get(
+    "/announcements/{announcement_id}", response_model=ResponseModel, summary="获取公告详情"
+)
 async def get_announcement(announcement_id: int):
     logger.info(f"获取公告详情: id={announcement_id}")
     announcement = await Announcement.filter(id=announcement_id, is_active=True).first()

@@ -3,7 +3,6 @@
 import asyncio
 import json
 import time
-from typing import Any
 
 from app.config import get_settings
 from app.core.logger import logger

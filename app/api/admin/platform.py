@@ -119,9 +119,10 @@ async def create_or_update_email_config(data: EmailConfigCreate):
 @router.post("/email-config/test", response_model=ResponseModel, summary="测试邮件配置")
 async def test_email_config(test_email: str):
     """发送测试邮件，成功则标记配置为已验证"""
-    import aiosmtplib
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
+
+    import aiosmtplib
 
     logger.info(f"测试邮件配置: to={test_email}")
     config = await EmailConfig.first()

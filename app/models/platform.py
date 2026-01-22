@@ -6,7 +6,6 @@ from app.models.base import BaseModel
 from app.schemas.platform import FooterLinkType
 
 
-
 class PlatformConfig(BaseModel):
     """平台配置"""
 

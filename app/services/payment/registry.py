@@ -1,7 +1,5 @@
 """支付提供者注册表 - 插件管理"""
 
-from typing import Type
-
 from app.core.logger import logger
 from app.models.product import PaymentMethod
 from app.services.payment.base import PaymentProvider
@@ -15,11 +13,11 @@ class PaymentRegistry:
 
     def __init__(self):
         # 提供者类注册 {provider_id: ProviderClass}
-        self._provider_classes: dict[str, Type[PaymentProvider]] = {}
+        self._provider_classes: dict[str, type[PaymentProvider]] = {}
         # 已启动的提供者实例 {provider_id: instance}
         self._active_providers: dict[str, PaymentProvider] = {}
 
-    def register(self, provider_class: Type[PaymentProvider]) -> Type[PaymentProvider]:
+    def register(self, provider_class: type[PaymentProvider]) -> type[PaymentProvider]:
         """
         注册支付提供者类
 
@@ -36,7 +34,7 @@ class PaymentRegistry:
         logger.info(f"支付提供者已注册: {provider_id} ({provider_class.provider_name})")
         return provider_class
 
-    def get_provider_class(self, provider_id: str) -> Type[PaymentProvider] | None:
+    def get_provider_class(self, provider_id: str) -> type[PaymentProvider] | None:
         """获取提供者类"""
         return self._provider_classes.get(provider_id)
 
@@ -131,6 +129,6 @@ def get_registry() -> PaymentRegistry:
     return _registry
 
 
-def register_provider(provider_class: Type[PaymentProvider]) -> Type[PaymentProvider]:
+def register_provider(provider_class: type[PaymentProvider]) -> type[PaymentProvider]:
     """注册支付提供者的便捷装饰器"""
     return get_registry().register(provider_class)

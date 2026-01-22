@@ -29,9 +29,7 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
     )
 
 
-async def http_exception_handler(
-    request: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     """
     HTTP异常处理器
     """
@@ -66,10 +64,7 @@ async def validation_exception_handler(
 
     message = "; ".join(error_messages) if error_messages else "请求参数验证失败"
 
-    logger.warning(
-        f"ValidationError | {request.method} {request.url.path} | "
-        f"errors={errors}"
-    )
+    logger.warning(f"ValidationError | {request.method} {request.url.path} | errors={errors}")
 
     return JSONResponse(
         status_code=422,
@@ -81,17 +76,14 @@ async def validation_exception_handler(
     )
 
 
-async def pydantic_exception_handler(
-    request: Request, exc: ValidationError
-) -> JSONResponse:
+async def pydantic_exception_handler(request: Request, exc: ValidationError) -> JSONResponse:
     """
     Pydantic验证异常处理器
     """
     errors = exc.errors()
 
     logger.warning(
-        f"PydanticValidationError | {request.method} {request.url.path} | "
-        f"errors={errors}"
+        f"PydanticValidationError | {request.method} {request.url.path} | errors={errors}"
     )
 
     return JSONResponse(

@@ -91,13 +91,15 @@ async def get_products(
 ):
     """
     获取商品列表，支持分类、搜索、多标签组合筛选
-    
+
     标签筛选说明：
     - 格式: `key:value`，多个标签用逗号分隔
     - 多个标签为 AND 关系（同时满足）
     - 示例: `?tags=platform:PC端,region:国服` 表示筛选平台为PC端且区服为国服的商品
     """
-    logger.info(f"获取商品列表: category={category_slug}, search={search}, tags={tags}, page={page}")
+    logger.info(
+        f"获取商品列表: category={category_slug}, search={search}, tags={tags}, page={page}"
+    )
     query = Product.filter(is_active=True)
 
     if category_slug:
@@ -118,32 +120,36 @@ async def get_products(
             if ":" in tag_str:
                 key, value = tag_str.split(":", 1)
                 tag_filters.append((key.strip(), value.strip()))
-        
+
         if tag_filters:
             # 找到同时包含所有指定标签的商品
             # 对每个标签条件，找出满足的商品ID，然后取交集
             product_ids_sets = []
             for key, value in tag_filters:
-                ids = await ProductTag.filter(key=key, value=value).values_list("product_id", flat=True)
+                ids = await ProductTag.filter(key=key, value=value).values_list(
+                    "product_id", flat=True
+                )
                 product_ids_sets.append(set(ids))
-            
+
             if product_ids_sets:
                 # 取所有集合的交集
                 matched_ids = product_ids_sets[0]
                 for ids_set in product_ids_sets[1:]:
                     matched_ids = matched_ids & ids_set
-                
+
                 if matched_ids:
                     query = query.filter(id__in=list(matched_ids))
                 else:
                     # 没有交集，返回空结果
-                    return success_response(data=PaginatedData(
-                        items=[],
-                        total=0,
-                        page=page,
-                        page_size=page_size,
-                        pages=0,
-                    ))
+                    return success_response(
+                        data=PaginatedData(
+                            items=[],
+                            total=0,
+                            page=page,
+                            page_size=page_size,
+                            pages=0,
+                        )
+                    )
 
     query = query.order_by("sort_order", "-created_at")
     items, total, pages = await paginate(query, page, page_size)
@@ -180,14 +186,14 @@ async def get_tags():
     logger.info("获取所有标签")
     # 只获取上架商品的标签
     tags = await ProductTag.filter(product__is_active=True).all()
-    
+
     # 按key分组，去重value
     tag_map: dict[str, set[str]] = {}
     for tag in tags:
         if tag.key not in tag_map:
             tag_map[tag.key] = set()
         tag_map[tag.key].add(tag.value)
-    
+
     # 转换为列表格式
     data = [{"key": k, "values": sorted(list(v))} for k, v in sorted(tag_map.items())]
     logger.info(f"获取到 {len(data)} 种标签")
@@ -242,7 +248,9 @@ async def get_product(slug: str):
         tags=[ProductTagResponse.model_validate(tag) for tag in product.tags],
         intros=[ProductIntroResponse.model_validate(intro) for intro in active_intros],
         payment_methods=[
-            PaymentMethodResponse.model_validate(pm) for pm in product.payment_methods if pm.is_active
+            PaymentMethodResponse.model_validate(pm)
+            for pm in product.payment_methods
+            if pm.is_active
         ],
     )
     return success_response(data=data)

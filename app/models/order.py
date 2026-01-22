@@ -20,12 +20,8 @@ if TYPE_CHECKING:
 class Order(BaseModel):
     """订单"""
 
-    order_no = fields.CharField(
-        max_length=64, unique=True, description="订单号", default=""
-    )
-    status = fields.CharEnumField(
-        OrderStatus, default=OrderStatus.PENDING, description="订单状态"
-    )
+    order_no = fields.CharField(max_length=64, unique=True, description="订单号", default="")
+    status = fields.CharEnumField(OrderStatus, default=OrderStatus.PENDING, description="订单状态")
     email = fields.CharField(max_length=255, description="下单邮箱")
     currency = fields.CharField(max_length=10, default="USD", description="结算币种")
     total_price = fields.DecimalField(
@@ -92,12 +88,8 @@ class OrderItem(BaseModel):
         ProductType, default=ProductType.VIRTUAL, description="商品类型(快照)"
     )
     quantity = fields.IntField(default=1, description="购买数量")
-    price = fields.DecimalField(
-        max_digits=10, decimal_places=2, description="商品单价(下单时价格)"
-    )
-    subtotal = fields.DecimalField(
-        max_digits=10, decimal_places=2, description="小计金额"
-    )
+    price = fields.DecimalField(max_digits=10, decimal_places=2, description="商品单价(下单时价格)")
+    subtotal = fields.DecimalField(max_digits=10, decimal_places=2, description="小计金额")
 
     # 虚拟商品发货内容
     delivery_content = fields.TextField(null=True, description="发货内容(卡密等)")
