@@ -135,7 +135,7 @@ async def init_payment(data: PaymentInitRequest):
 
 @router.get("/status/{order_no}", response_model=ResponseModel, summary="查询支付状态")
 async def get_payment_status(order_no: str):
-    """查询支付状态"""
+    """查询支付状态（前端轮询调用，会主动查询支付平台确认状态）"""
     logger.info(f"查询支付状态: order_no={order_no}")
 
     order = await Order.filter(order_no=order_no).first()
@@ -154,6 +154,20 @@ async def get_payment_status(order_no: str):
         status = "completed"
     elif not pending:
         status = "expired"
+
+    # 如果订单仍在待支付状态，主动查询支付平台确认
+    if status == "pending" and pending:
+        provider_id = pending.get("provider_id", "")
+        registry = get_registry()
+        provider = registry.get_active_provider(provider_id)
+
+        if provider:
+            try:
+                # 调用 verify_payment 主动查询（微信支付会触发完成流程）
+                await provider.verify_payment(order_no, pending)
+                logger.info(f"主动查询确认支付成功: order_no={order_no}")
+            except Exception as e:
+                logger.warning(f"主动查询支付状态失败: order_no={order_no}, error={e}")
 
     return success_response(
         data={

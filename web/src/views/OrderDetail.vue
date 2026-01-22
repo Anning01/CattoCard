@@ -484,6 +484,16 @@ function copyPaymentAmount() {
                   <p>请使用微信扫一扫完成支付</p>
                   <p class="text-green-600 font-medium">支付成功后页面将自动更新</p>
                 </div>
+
+                <!-- 重要提示：不要关闭页面 -->
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                  <div class="flex items-center gap-2 text-amber-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="font-medium text-sm">请勿关闭此页面，支付完成前请保持页面打开</span>
+                  </div>
+                </div>
               </template>
 
               <!-- TRC20/其他支付提示 -->
