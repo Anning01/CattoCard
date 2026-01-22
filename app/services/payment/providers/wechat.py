@@ -1,9 +1,9 @@
+import asyncio
 import json
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-import asyncio
 from forex_python.converter import CurrencyRates
 from wechatpayv3 import WeChatPay, WeChatPayType
 
@@ -235,10 +235,12 @@ class WechatProvider(PaymentProvider):
                 if trade_state == "SUCCESS":
                     logger.info(f"订单 {order_no} 查询结果: 支付成功，触发完成流程")
                     # 调用统一的完成流程
-                    callback_result = await self.handle_callback({
-                        "source": "query",  # 标记来源是主动查询
-                        "query_result": result,
-                    })
+                    callback_result = await self.handle_callback(
+                        {
+                            "source": "query",  # 标记来源是主动查询
+                            "query_result": result,
+                        }
+                    )
                     return callback_result.get("success", False)
                 else:
                     logger.info(f"订单 {order_no} 状态: {trade_state}")
@@ -251,7 +253,9 @@ class WechatProvider(PaymentProvider):
             logger.exception(f"验证支付异常: {str(e)}")
             return False
 
-    async def _process_payment_success(self, order_no: str, transaction_id: str, result: dict) -> dict:
+    async def _process_payment_success(
+        self, order_no: str, transaction_id: str, result: dict
+    ) -> dict:
         """
         处理支付成功的统一逻辑（回调和主动查询共用）
 
@@ -352,7 +356,11 @@ class WechatProvider(PaymentProvider):
                 return {"success": False, "message": "缺少订单号"}
 
             if trade_state != "SUCCESS":
-                return {"success": False, "message": f"订单状态: {trade_state}", "order_no": order_no}
+                return {
+                    "success": False,
+                    "message": f"订单状态: {trade_state}",
+                    "order_no": order_no,
+                }
 
             logger.info(f"微信支付主动查询 - 订单号: {order_no}, 状态: {trade_state}")
             return await self._process_payment_success(order_no, transaction_id, result)
@@ -402,4 +410,3 @@ class WechatProvider(PaymentProvider):
 
             # 5. 调用统一处理逻辑
             return await self._process_payment_success(order_no, transaction_id, result)
-
