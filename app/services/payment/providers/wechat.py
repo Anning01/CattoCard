@@ -171,7 +171,7 @@ class WechatProvider(PaymentProvider):
             code, message = self.wechatpay_client.pay(
                 description=f"订单-{order_no}",
                 out_trade_no=order_no,
-                amount={"total": amount_fen, "currency": "CNY"},
+                amount={"total": amount_fen},
                 pay_type=WeChatPayType.NATIVE  # 示例使用 Native 扫码
             )
 
