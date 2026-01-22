@@ -522,13 +522,15 @@ function getLogTypeTag(type: string) {
           >
             <template v-if="field.type === 'text'">
               <el-input
-                v-model="form.meta_data![field.key]"
+                :model-value="String(form.meta_data?.[field.key] ?? '')"
+                @update:model-value="(val: string) => form.meta_data![field.key] = val"
                 :placeholder="field.placeholder"
               />
             </template>
             <template v-else-if="field.type === 'password'">
               <el-input
-                v-model="form.meta_data![field.key]"
+                :model-value="String(form.meta_data?.[field.key] ?? '')"
+                @update:model-value="(val: string) => form.meta_data![field.key] = val"
                 type="password"
                 show-password
                 :placeholder="field.placeholder"
@@ -536,12 +538,17 @@ function getLogTypeTag(type: string) {
             </template>
             <template v-else-if="field.type === 'number'">
               <el-input-number
-                v-model="form.meta_data![field.key]"
+                :model-value="form.meta_data?.[field.key] as number"
+                @update:model-value="(val: number | undefined) => form.meta_data![field.key] = val"
                 :min="0"
               />
             </template>
             <template v-else-if="field.type === 'select'">
-              <el-select v-model="form.meta_data![field.key]" style="width: 100%">
+              <el-select
+                :model-value="form.meta_data?.[field.key] as string | number | boolean"
+                @update:model-value="(val: string | number | boolean) => form.meta_data![field.key] = val"
+                style="width: 100%"
+              >
                 <el-option
                   v-for="opt in field.options"
                   :key="opt.value"
@@ -580,11 +587,14 @@ function getLogTypeTag(type: string) {
         <div class="logs-header">
           <div class="logs-stats">
             <el-statistic title="总日志数" :value="scanLogsTotal" />
-            <el-statistic 
-              v-if="scanLogs.length > 0" 
-              title="最近扫描" 
-              :value="formatTimestamp(scanLogs[0]?.time || 0)" 
-            />
+            <el-statistic
+              v-if="scanLogs.length > 0"
+              title="最近扫描"
+              :value="scanLogs[0]?.time || 0"
+              :value-style="{ fontSize: '14px' }"
+            >
+              <template #suffix>{{ formatTimestamp(scanLogs[0]?.time || 0) }}</template>
+            </el-statistic>
           </div>
           <el-button size="small" @click="loadScanLogs">刷新</el-button>
         </div>

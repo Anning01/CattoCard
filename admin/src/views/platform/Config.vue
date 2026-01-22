@@ -124,7 +124,7 @@ function loadOrderConfig() {
 }
 
 // 保存自动发货配置
-async function saveAutoDeliveryConfig(value: boolean) {
+async function saveAutoDeliveryConfig(value: string | number | boolean) {
   const key = 'auto_delivery_virtual'
   const existing = configs.value.find((c) => c.key === key)
   try {
