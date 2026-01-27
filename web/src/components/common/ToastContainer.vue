@@ -25,7 +25,8 @@ const colorMap = {
       <div
         v-for="toast in appStore.toasts"
         :key="toast.id"
-        class="flex items-center gap-3 px-4 py-3 bg-white rounded-xl shadow-lg border border-gray-100 animate-slide-down min-w-[280px] max-w-sm"
+        class="flex items-center gap-3 px-4 py-3 bg-white rounded-xl shadow-lg border border-gray-100 min-w-[280px] max-w-sm"
+
       >
         <component :is="iconMap[toast.type]" class="w-5 h-5 shrink-0" :class="colorMap[toast.type]" />
         <span class="text-sm text-gray-700">{{ toast.message }}</span>

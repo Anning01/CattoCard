@@ -2,7 +2,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { get, post } from '@/utils/request'
-import { formatPrice, formatDate, getOrderStatusText, getOrderStatusColor, updateOrderInHistory } from '@/utils/storage'
+import {
+  formatPrice,
+  formatDate,
+  getOrderStatusText,
+  getOrderStatusColor,
+  updateOrderInHistory,
+  copyText,
+} from '@/utils/storage'
 import type { OrderDetail, PaymentInitResponse, PaymentStatusResponse } from '@/types'
 import {
   CheckCircleIcon,
@@ -14,12 +21,18 @@ import {
   ChevronLeftIcon,
   ChatBubbleLeftRightIcon,
   MapPinIcon,
+  TrashIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 import { useAppStore } from '@/stores/app'
 import QrcodeVue from 'qrcode.vue'
 
 const route = useRoute()
 const appStore = useAppStore()
+
+// 取消订单确认弹窗
+const showCancelDialog = ref(false)
 
 const loading = ref(true)
 const order = ref<OrderDetail | null>(null)
@@ -205,27 +218,66 @@ function closePaymentModal() {
   stopTimers()
 }
 
-function copyOrderNo() {
+async function copyOrderNo() {
   if (!order.value) return
-  navigator.clipboard.writeText(order.value.order_no)
-  appStore.success('订单号已复制')
+  const success = await copyText(order.value.order_no)
+  if (success) {
+    appStore.success('订单号已复制')
+  } else {
+    appStore.error('复制失败，请手动复制')
+  }
 }
 
-function copyContent(content: string) {
-  navigator.clipboard.writeText(content)
-  appStore.success('已复制到剪贴板')
+async function copyContent(content: string) {
+  const success = await copyText(content)
+  if (success) {
+    appStore.success('已复制到剪贴板')
+  } else {
+    appStore.error('复制失败，请手动复制')
+  }
 }
 
-function copyWalletAddress() {
+async function copyWalletAddress() {
   if (!paymentData.value?.payment_data?.wallet_address) return
-  navigator.clipboard.writeText(paymentData.value.payment_data.wallet_address)
-  appStore.success('钱包地址已复制')
+  const success = await copyText(paymentData.value.payment_data.wallet_address)
+  if (success) {
+    appStore.success('钱包地址已复制')
+  } else {
+    appStore.error('复制失败，请手动复制')
+  }
 }
 
-function copyPaymentAmount() {
+async function copyPaymentAmount() {
   if (!paymentData.value?.payment_data?.amount) return
-  navigator.clipboard.writeText(paymentData.value.payment_data.amount)
-  appStore.success('支付金额已复制')
+  const success = await copyText(String(paymentData.value.payment_data.amount))
+  if (success) {
+    appStore.success('支付金额已复制')
+  } else {
+    appStore.error('复制失败，请手动复制')
+  }
+}
+
+async function cancelOrder() {
+  if (!order.value) return
+  showCancelDialog.value = true
+}
+
+async function confirmCancel() {
+  if (!order.value) return
+  showCancelDialog.value = false
+
+  loading.value = true
+  try {
+    await post(`/orders/${order.value.order_no}/cancel`, {}, {
+      params: { email: email.value }
+    })
+    appStore.success('订单已取消')
+    await refreshOrder()
+  } catch (error: any) {
+    appStore.error(error.message || '取消订单失败')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -286,6 +338,16 @@ function copyPaymentAmount() {
                 订单已完成，商品信息请查看下方
               </p>
             </div>
+
+            <!-- 取消按钮 -->
+            <button
+              v-if="order.status === 'pending'"
+              class="flex items-center gap-1.5 px-4 py-2 ml-auto text-sm font-medium text-gray-600 bg-gray-100 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+              @click="cancelOrder"
+            >
+              <TrashIcon class="w-4 h-4" />
+              <span>取消订单</span>
+            </button>
           </div>
         </div>
 
@@ -564,5 +626,69 @@ function copyPaymentAmount() {
         </div>
       </div>
     </Teleport>
+
+    <!-- 取消订单确认弹窗 -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showCancelDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <!-- 遮罩 -->
+          <div class="absolute inset-0 bg-black/50" @click="showCancelDialog = false" />
+
+          <!-- 弹窗内容 -->
+          <div class="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+            <!-- 关闭按钮 -->
+            <button
+              class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              @click="showCancelDialog = false"
+            >
+              <XMarkIcon class="w-5 h-5" />
+            </button>
+
+            <!-- 图标 -->
+            <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+              <ExclamationTriangleIcon class="w-6 h-6 text-red-600" />
+            </div>
+
+            <!-- 标题 -->
+            <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">确定取消订单？</h3>
+
+            <!-- 内容 -->
+            <p class="text-gray-500 text-sm text-center mb-6">
+              订单取消后无法恢复，请确认是否继续？
+            </p>
+
+            <!-- 按钮 -->
+            <div class="flex gap-3">
+              <button
+                class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                @click="showCancelDialog = false"
+              >
+                暂不取消
+              </button>
+              <button
+                class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors"
+                :disabled="loading"
+                @click="confirmCancel"
+              >
+                <span v-if="loading">取消中...</span>
+                <span v-else>确定取消</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+</style>

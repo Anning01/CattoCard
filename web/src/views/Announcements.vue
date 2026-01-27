@@ -94,7 +94,7 @@ function toggleExpand(id: number) {
           <!-- 月份标题 -->
           <div class="flex items-center gap-3 mb-4">
             <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-              <span class="text-sm font-bold text-primary-600">{{ monthKey.slice(-3, -1) }}</span>
+              <span class="text-sm font-bold text-primary-600">最新</span>
             </div>
             <span class="text-lg font-semibold text-gray-900">{{ monthKey }}</span>
           </div>

@@ -13,10 +13,15 @@ import {
   TrashIcon,
   ArrowRightIcon,
   MapPinIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const appStore = useAppStore()
+
+// 清除历史确认弹窗
+const showClearHistoryDialog = ref(false)
 
 const activeTab = ref<'query' | 'history'>('query')
 const loading = ref(false)
@@ -70,11 +75,14 @@ function viewOrder(orderNo: string, email: string) {
 }
 
 function handleClearHistory() {
-  if (confirm('确定要清除所有历史记录吗？')) {
-    clearOrderHistory()
-    localHistory.value = []
-    appStore.success('历史记录已清除')
-  }
+  showClearHistoryDialog.value = true
+}
+
+function confirmClearHistory() {
+  clearOrderHistory()
+  localHistory.value = []
+  showClearHistoryDialog.value = false
+  appStore.success('历史记录已清除')
 }
 </script>
 
@@ -219,7 +227,7 @@ function handleClearHistory() {
             <div class="flex items-center justify-between mb-4">
               <p class="text-gray-500 text-sm">共 {{ localHistory.length }} 条记录（保存在本地浏览器）</p>
               <button
-                class="text-sm text-red-500 hover:text-red-600 flex items-center gap-1"
+                class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-orange-50 hover:text-orange-600 rounded-lg transition-all duration-200"
                 @click="handleClearHistory"
               >
                 <TrashIcon class="w-4 h-4" />
@@ -261,5 +269,67 @@ function handleClearHistory() {
         </div>
       </div>
     </div>
+
+    <!-- 清除历史确认弹窗 -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showClearHistoryDialog" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <!-- 遮罩 -->
+          <div class="absolute inset-0 bg-black/50" @click="showClearHistoryDialog = false" />
+
+        <!-- 弹窗内容 -->
+        <div class="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6">
+          <!-- 关闭按钮 -->
+          <button
+            class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            @click="showClearHistoryDialog = false"
+          >
+            <XMarkIcon class="w-5 h-5" />
+          </button>
+
+          <!-- 图标 -->
+          <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
+            <ExclamationTriangleIcon class="w-6 h-6 text-orange-600" />
+          </div>
+
+          <!-- 标题 -->
+          <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">确定清除历史记录？</h3>
+
+          <!-- 内容 -->
+          <p class="text-gray-500 text-sm text-center mb-6">
+            清除后无法恢复，但不影响已下单的订单
+          </p>
+
+          <!-- 按钮 -->
+          <div class="flex gap-3">
+            <button
+              class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+              @click="showClearHistoryDialog = false"
+            >
+              取消
+            </button>
+            <button
+              class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition-colors"
+              @click="confirmClearHistory"
+            >
+              确定清除
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
   </div>
 </template>
+
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+</style>

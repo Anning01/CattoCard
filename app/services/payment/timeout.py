@@ -3,8 +3,7 @@
 import asyncio
 
 from app.core.logger import logger
-from app.models.order import Order, OrderLog
-from app.models.product import Product
+from app.models.order import Order
 from app.schemas.order import OrderStatus
 from app.utils.redis_client import (
     DistributedLock,
@@ -93,6 +92,8 @@ class OrderTimeoutTask:
 
     async def _cancel_order(self, order_no: str, pending_data: dict) -> None:
         """取消超时订单并释放库存"""
+        from app.services.order import OrderService
+
         order = await Order.filter(order_no=order_no).first()
         if not order:
             # 订单不存在，清理 Redis 数据
@@ -106,30 +107,18 @@ class OrderTimeoutTask:
 
         logger.info(f"取消超时订单: order_no={order_no}")
 
-        # 释放库存
-        await order.fetch_related("items")
-        for item in order.items:
-            product = await Product.filter(id=item.product_id).first()
-            if product:
-                product.stock += item.quantity
-                await product.save()
-                logger.info(f"释放库存: product_id={product.id}, quantity={item.quantity}")
-
-        # 更新订单状态
-        order.status = OrderStatus.CANCELLED
-        await order.save()
-
-        # 记录日志
-        await OrderLog.create(
-            order=order,
-            action="timeout_cancel",
-            content="订单超时未支付，自动取消并释放库存",
-        )
-
-        # 清理 Redis 数据
-        await self._cleanup_pending_data(order_no, pending_data)
-
-        logger.info(f"超时订单已取消: order_no={order_no}")
+        try:
+            # 使用 OrderService 取消订单
+            await OrderService.cancel_order(
+                order=order,
+                operator="system",
+                reason="订单超时未支付，自动取消",
+            )
+            # 无需手动清理 Redis，OrderService 已处理
+        except Exception as e:
+            logger.error(f"取消超时订单失败: order_no={order_no}, error={e}")
+            # 确保 Redis 清理，防止脏数据
+            await self._cleanup_pending_data(order_no, pending_data)
 
     async def _cleanup_pending_data(self, order_no: str, pending_data: dict) -> None:
         """清理待支付订单的 Redis 数据"""

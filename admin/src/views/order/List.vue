@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { get } from '@/utils/request'
-import type { Order, PaginatedData } from '@/types'
+import type { Order, PaginatedData, Product } from '@/types'
 import { View, Search } from '@element-plus/icons-vue'
 import { useAppStore } from '@/stores/app'
 
@@ -10,6 +10,9 @@ const router = useRouter()
 const appStore = useAppStore()
 const loading = ref(false)
 const list = ref<Order[]>([])
+
+// 商品列表（用于筛选）
+const products = ref<Product[]>([])
 
 // 分页
 const pagination = ref({
@@ -22,6 +25,8 @@ const pagination = ref({
 const searchForm = ref({
   status: '' as string,
   search: '',
+  dateRange: [] as string[],
+  product_id: null as number | null,
 })
 
 // 订单状态
@@ -44,9 +49,82 @@ const statusMap: Record<string, { label: string; type: string }> = {
   refunded: { label: '已退款', type: 'danger' },
 }
 
+// 时间快捷选项
+const dateShortcuts = [
+  {
+    text: '今天',
+    value: () => {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const end = new Date()
+      end.setHours(23, 59, 59, 999)
+      return [today, end]
+    },
+  },
+  {
+    text: '昨天',
+    value: () => {
+      const start = new Date()
+      start.setDate(start.getDate() - 1)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date()
+      end.setDate(end.getDate() - 1)
+      end.setHours(23, 59, 59, 999)
+      return [start, end]
+    },
+  },
+  {
+    text: '最近7天',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setDate(start.getDate() - 6)
+      start.setHours(0, 0, 0, 0)
+      return [start, end]
+    },
+  },
+  {
+    text: '最近30天',
+    value: () => {
+      const end = new Date()
+      const start = new Date()
+      start.setDate(start.getDate() - 29)
+      start.setHours(0, 0, 0, 0)
+      return [start, end]
+    },
+  },
+  {
+    text: '本月',
+    value: () => {
+      const start = new Date()
+      start.setDate(1)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date()
+      return [start, end]
+    },
+  },
+]
+
 onMounted(() => {
   loadList()
+  loadProducts()
 })
+
+async function loadProducts() {
+  try {
+    const res = await get<PaginatedData<Product>>('/admin/products', { page_size: 100 })
+    products.value = res.data.items
+  } catch {
+    // 忽略错误
+  }
+}
+
+function formatDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 async function loadList() {
   loading.value = true
@@ -57,6 +135,14 @@ async function loadList() {
     }
     if (searchForm.value.status) params.status = searchForm.value.status
     if (searchForm.value.search) params.search = searchForm.value.search
+    if (searchForm.value.product_id) params.product_id = searchForm.value.product_id
+
+    // 时间段筛选
+    if (searchForm.value.dateRange && searchForm.value.dateRange.length === 2 &&
+        searchForm.value.dateRange[0] && searchForm.value.dateRange[1]) {
+      params.start_date = formatDate(new Date(searchForm.value.dateRange[0]))
+      params.end_date = formatDate(new Date(searchForm.value.dateRange[1]))
+    }
 
     const res = await get<PaginatedData<Order>>('/admin/orders', params)
     list.value = res.data.items
@@ -75,6 +161,8 @@ function handleReset() {
   searchForm.value = {
     status: '',
     search: '',
+    dateRange: [],
+    product_id: null,
   }
   handleSearch()
 }
@@ -112,6 +200,34 @@ function handleView(row: Order) {
             <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
+        <el-form-item label="时间段">
+          <el-date-picker
+            v-model="searchForm.dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :shortcuts="dateShortcuts"
+            style="width: 260px"
+            value-format="YYYY-MM-DD"
+          />
+        </el-form-item>
+        <el-form-item label="商品">
+          <el-select
+            v-model="searchForm.product_id"
+            placeholder="全部商品"
+            clearable
+            filterable
+            style="width: 180px"
+          >
+            <el-option
+              v-for="item in products"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
           <el-button @click="handleReset">重置</el-button>
@@ -122,9 +238,9 @@ function handleView(row: Order) {
     <!-- 订单列表 -->
     <el-card>
       <el-table :data="list" style="width: 100%">
+        <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="order_no" label="订单号" min-width="200" />
         <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="id" label="ID" width="80" />
         <el-table-column label="金额" width="120">
           <template #default="{ row }">
             <span class="price">{{ appStore.formatPrice(row.total_price) }}</span>

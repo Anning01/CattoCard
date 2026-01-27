@@ -1,6 +1,9 @@
 """订单管理API"""
 
+from datetime import datetime
+
 from fastapi import APIRouter, Query
+from tortoise.expressions import Q
 
 from app.core.exceptions import BadRequestException, NotFoundException
 from app.core.logger import logger
@@ -49,20 +52,59 @@ async def _get_order_detail(order_id: int) -> OrderDetailResponse:
 @router.get("", response_model=ResponseModel, summary="获取订单列表")
 async def get_orders(
     status: OrderStatus | None = None,
-    email: str | None = None,
-    order_no: str | None = None,
+    search: str | None = None,
+    date: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    product_id: int | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
-    logger.info(f"获取订单列表(管理): status={status}, email={email}, order_no={order_no}")
+    logger.info(
+        f"获取订单列表(管理): status={status}, search={search}, "
+        f"date={date}, start_date={start_date}, end_date={end_date}, product_id={product_id}"
+    )
     query = Order.all()
 
     if status:
         query = query.filter(status=status)
-    if email:
-        query = query.filter(email__icontains=email)
-    if order_no:
-        query = query.filter(order_no__icontains=order_no)
+
+    if search:
+        query = query.filter(Q(order_no__icontains=search) | Q(email__icontains=search))
+
+    # 按单日筛选（格式：2026-01-27）
+    if date:
+        try:
+            target_date = datetime.strptime(date, "%Y-%m-%d")
+            date_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            date_end = target_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+            query = query.filter(created_at__gte=date_start, created_at__lte=date_end)
+        except ValueError:
+            pass
+
+    # 按时间段筛选
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+            query = query.filter(created_at__gte=start)
+        except ValueError:
+            pass
+
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+            end = end.replace(hour=23, minute=59, second=59, microsecond=999999)
+            query = query.filter(created_at__lte=end)
+        except ValueError:
+            pass
+
+    # 按商品筛选（通过订单项关联）
+    if product_id:
+        from app.models.order import OrderItem
+
+        order_ids = await OrderItem.filter(product_id=product_id).values_list("order_id", flat=True)
+        query = query.filter(id__in=list(order_ids))
 
     query = query.order_by("-created_at")
     items, total, pages = await paginate(query, page, page_size)

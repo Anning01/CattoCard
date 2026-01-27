@@ -109,3 +109,36 @@ export function getOrderStatusColor(status: string): string {
   }
   return map[status] || 'text-gray-600 bg-gray-100'
 }
+
+// 复制文本到剪贴板
+export async function copyText(text: string): Promise<boolean> {
+  if (!text) return false
+
+  try {
+    // 优先使用 clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+
+    // 降级方案：使用 textarea + execCommand
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+
+    // 确保 textarea 不可见但可选中
+    textArea.style.position = 'fixed'
+    textArea.style.left = '-9999px'
+    textArea.style.top = '0'
+    document.body.appendChild(textArea)
+
+    textArea.focus()
+    textArea.select()
+
+    const successful = document.execCommand('copy')
+    document.body.removeChild(textArea)
+    return successful
+  } catch (err) {
+    console.error('Copy failed', err)
+    return false
+  }
+}

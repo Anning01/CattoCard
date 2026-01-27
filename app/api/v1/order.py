@@ -126,6 +126,31 @@ async def create_order(data: OrderCreate):
     return success_response(data=response_data, message="订单创建成功")
 
 
+@router.post("/{order_no}/cancel", response_model=ResponseModel, summary="取消订单")
+async def cancel_order(order_no: str, email: str):
+    logger.info(f"用户取消订单: order_no={order_no}, email={email}")
+    order = await Order.filter(order_no=order_no, email=email).first()
+    if not order:
+        logger.warning(f"订单不存在: order_no={order_no}")
+        raise NotFoundException(message="订单不存在")
+
+    if order.status != OrderStatus.PENDING:
+        raise BadRequestException(message="只有待支付的订单可以取消")
+
+    from app.services.order import OrderService
+
+    try:
+        await OrderService.cancel_order(
+            order=order,
+            operator="user",
+            reason="用户主动取消",
+        )
+        return success_response(message="订单已取消")
+    except Exception as e:
+        logger.error(f"取消订单失败: order_no={order_no}, error={e}")
+        raise BadRequestException(message="取消订单失败，请稍后重试")
+
+
 @router.post("/query", response_model=ResponseModel, summary="通过邮箱查询订单")
 async def query_orders(data: OrderQueryByEmail):
     logger.info(f"查询订单: email={data.email}, order_no={data.order_no}")

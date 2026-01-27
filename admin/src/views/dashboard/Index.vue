@@ -32,6 +32,12 @@ onMounted(async () => {
     // 待处理订单
     const pendingRes = await get<PaginatedData<Order>>('/admin/orders', { status: 'pending', page_size: 1 })
     stats.value.pendingOrders = pendingRes.data.total
+
+    // 今日订单
+    const today = new Date().toISOString().slice(0, 10)
+    
+    const todayRes = await get<PaginatedData<Order>>('/admin/orders', {date: today, page_size: 1})
+    stats.value.todayOrders = todayRes.data.total
   } catch {
     // 错误已在拦截器处理
   } finally {
