@@ -20,7 +20,7 @@ const colorMap = {
 </script>
 
 <template>
-  <div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center">
+  <div class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center">
     <TransitionGroup name="toast">
       <div
         v-for="toast in appStore.toasts"
