@@ -438,6 +438,8 @@ const displayInventoryItems = computed(() => {
                   <el-input-number
                     v-model="form.stock"
                     :min="0"
+                    :step="1"
+                    :step-strictly="true"
                     :disabled="form.product_type === 'virtual'"
                     style="width: 100%"
                   />

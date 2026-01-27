@@ -46,15 +46,31 @@ const submitting = ref(false)
 const isInCart = computed(() => product.value ? cartStore.isInCart(product.value.id) : false)
 const cartQuantity = computed(() => product.value ? cartStore.getItemQuantity(product.value.id) : 0)
 
-// 监听数量变化，强制限制在有效范围内
+// // 监听数量变化，强制限制在有效范围内
 watch(quantity, (newVal) => {
   if (!product.value) return
+
   const stock = product.value.stock
-  // 处理无效值（NaN、0、负数）
-  if (!newVal || newVal < 1 || isNaN(newVal)) {
-    quantity.value = 1
-  } else if (newVal > stock) {
-    quantity.value = stock
+  let finalVal = newVal
+
+  // 1. 处理非数字情况 (NaN 或 null)
+  if (typeof finalVal !== 'number' || isNaN(finalVal)) {
+    finalVal = 1
+  }
+
+  // 2. 强制取整（处理小数输入）
+  finalVal = Math.floor(finalVal)
+
+  // 3. 限制范围（最小值 1，最大值库存）
+  if (finalVal < 1) {
+    finalVal = 1
+  } else if (finalVal > stock) {
+    finalVal = stock
+  }
+
+  // 4. 只有在值确实需要改变时才赋值，避免无限循环
+  if (finalVal !== newVal) {
+    quantity.value = finalVal
   }
 })
 
@@ -330,6 +346,7 @@ async function handleBuyNow() {
                     v-model.number="quantity"
                     type="number"
                     min="1"
+                    step="1"
                     :max="product.stock"
                     class="w-16 h-10 text-center border-y border-gray-200 bg-white text-gray-900 focus:outline-none"
                   />
