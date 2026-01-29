@@ -14,6 +14,7 @@ from app.models.product import (
     ProductIntro,
     ProductTag,
 )
+from app.schemas import OrderStatus
 from app.schemas.product import (
     CategoryCreate,
     CategoryResponse,
@@ -113,9 +114,24 @@ async def delete_category(category_id: int):
     if await Category.filter(parent_id=category_id).exists():
         raise BadRequestException(message="请先删除子分类")
 
-    if await Product.filter(category_id=category_id).exists():
-        raise BadRequestException(message="分类下有商品，无法删除")
+    # 查询分类下的商品
+    products_qs = Product.filter(category_id=category_id)
 
+    if await products_qs.exists():
+        # 是否存在“未下架”的商品
+        has_online_product = await products_qs.exclude(
+            is_active=True
+        ).exists()
+
+        if has_online_product:
+            raise BadRequestException(message="分类下存在未下架商品，无法删除")
+
+        # 全部已下架 → 批量置空分类
+        await products_qs.update(category_id=None)
+
+        logger.info(
+            f"分类下商品已全部下架，已清空商品分类: category_id={category_id}"
+        )
     await category.delete()
     logger.info(f"分类删除成功: id={category_id}")
     return success_response(message="删除成功")
@@ -398,16 +414,31 @@ async def delete_product(product_id: int):
     # 检查是否有关联订单
     from app.models.order import OrderItem
 
+    # 1️⃣ 是否有关联订单
     has_orders = await OrderItem.filter(product_id=product_id).exists()
-    if has_orders:
-        # 有订单关联，使用软删除（下架商品）
-        product.is_active = False
-        await product.save()
-        logger.info(f"商品已下架(有关联订单): id={product_id}")
-        return success_response(message="商品已下架（有关联订单，无法彻底删除）")
+    if not has_orders:
+        # 无任何订单 → 直接硬删除
+        await product.delete()
+        logger.info(f"商品删除成功: id={product_id}")
+        return success_response(message="删除成功")
 
-    # 无订单关联，可以硬删除
-    await product.delete()
+    # 2️⃣ 是否存在「待支付」订单
+    has_pending_order = await OrderItem.filter(
+        product_id=product_id,
+        order__status=OrderStatus.PENDING,
+    ).exists()
+
+    if has_pending_order:
+        # 🚫 关键规则：待支付订单不允许任何删除行为
+        raise BadRequestException(
+            message="商品存在待支付订单，无法删除或下架"
+        )
+
+    # 3️⃣ 只有历史订单 → 允许下架（软删除）
+    if product.is_active:
+        product.is_active = False
+        await product.save(update_fields=["is_active"])
+
     logger.info(f"商品删除成功: id={product_id}")
     return success_response(message="删除成功")
 

@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { get, del } from '@/utils/request'
-import type { Product, Category, PaginatedData } from '@/types'
+import type {Product, Category, PaginatedData, ApiResponse} from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, View, Search } from '@element-plus/icons-vue'
 import { useAppStore } from '@/stores/app'
@@ -86,8 +86,8 @@ function handleEdit(row: Product) {
 async function handleDelete(row: Product) {
   await ElMessageBox.confirm(`确定要删除商品「${row.name}」吗？`, '提示', { type: 'warning' })
   try {
-    await del(`/admin/products/${row.id}`)
-    ElMessage.success('删除成功')
+    const res = await del<ApiResponse>(`/admin/products/${row.id}`)
+    ElMessage.success(res.message)
     await loadList()
   } catch {
     // 错误已处理
