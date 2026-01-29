@@ -394,6 +394,19 @@ async def delete_product(product_id: int):
     product = await Product.filter(id=product_id).first()
     if not product:
         raise NotFoundException(message="商品不存在")
+
+    # 检查是否有关联订单
+    from app.models.order import OrderItem
+
+    has_orders = await OrderItem.filter(product_id=product_id).exists()
+    if has_orders:
+        # 有订单关联，使用软删除（下架商品）
+        product.is_active = False
+        await product.save()
+        logger.info(f"商品已下架(有关联订单): id={product_id}")
+        return success_response(message="商品已下架（有关联订单，无法彻底删除）")
+
+    # 无订单关联，可以硬删除
     await product.delete()
     logger.info(f"商品删除成功: id={product_id}")
     return success_response(message="删除成功")
