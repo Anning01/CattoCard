@@ -118,8 +118,8 @@ async def delete_category(category_id: int):
     products_qs = Product.filter(category_id=category_id)
 
     if await products_qs.exists():
-        # 是否存在“未下架”的商品
-        has_online_product = await products_qs.exclude(
+        # 是否存在“仍然上架”的商品
+        has_online_product = await products_qs.filter(
             is_active=True
         ).exists()
 
@@ -410,7 +410,7 @@ async def delete_product(product_id: int):
     product = await Product.filter(id=product_id).first()
     if not product:
         raise NotFoundException(message="商品不存在")
-
+    message = "删除成功"
     # 检查是否有关联订单
     from app.models.order import OrderItem
 
@@ -420,7 +420,7 @@ async def delete_product(product_id: int):
         # 无任何订单 → 直接硬删除
         await product.delete()
         logger.info(f"商品删除成功: id={product_id}")
-        return success_response(message="删除成功")
+        return success_response(message=message)
 
     # 2️⃣ 是否存在「待支付」订单
     has_pending_order = await OrderItem.filter(
@@ -438,9 +438,9 @@ async def delete_product(product_id: int):
     if product.is_active:
         product.is_active = False
         await product.save(update_fields=["is_active"])
-
+    message = "商品已下架（有关联订单，无法彻底删除）"
     logger.info(f"商品删除成功: id={product_id}")
-    return success_response(message="删除成功")
+    return success_response(message=message)
 
 
 # ==================== 库存管理(虚拟商品) ====================
