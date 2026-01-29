@@ -136,7 +136,8 @@ class TRC20Provider(PaymentProvider):
         base = Decimal(base_amount)
 
         # 尝试不同的后缀
-        for i in range(1, 10000):
+        limit = 10**self.amount_precision
+        for i in range(1, limit):
             # 生成后缀 0.0001, 0.0002, ...
             suffix = Decimal(i) / Decimal(10**self.amount_precision)
             unique_amount = (base + suffix).quantize(

@@ -438,7 +438,7 @@ async def delete_product(product_id: int):
     if has_pending_order:
         # 🚫 关键规则：待支付订单不允许任何删除行为
         raise BadRequestException(
-            message="商品存在待支付订单，无法删除或下架"
+            message="商品存在待支付订单，无法删除"
         )
 
     # 3️⃣ 只有历史订单 → 允许下架（软删除）

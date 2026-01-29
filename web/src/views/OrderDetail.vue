@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { get, post } from '@/utils/request'
 import {
@@ -139,7 +139,6 @@ async function initPayment() {
       order_no: order.value.order_no
     })
     paymentData.value = res.data
-    await nextTick()
     showPaymentModal.value = true
 
     // 启动倒计时
@@ -518,7 +517,7 @@ async function confirmCancel() {
             <div class="flex justify-center mb-6">
               <div class="p-4 bg-white border-2 border-gray-100 rounded-xl">
                 <QrcodeVue
-                  v-if="qrCodeValue"
+                  :key="qrCodeValue"
                   :value="qrCodeValue"
                   :size="200"
                   level="M"

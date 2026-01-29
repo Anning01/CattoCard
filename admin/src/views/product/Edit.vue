@@ -52,7 +52,7 @@ const rules = {
     { required: true, message: '请输入商品别名', trigger: 'blur' },
     { pattern: /^[a-z0-9]+(?:-[a-z0-9]+)*$/, message: '只能包含小写字母、数字和连字符', trigger: 'blur' },
   ],
-  price: [{ required: true, message: '请输入商品价格', trigger: 'blur' }, { pattern: /^\d+(\.\d{1,2})?$/, message: '最多支持4位小数', trigger: 'blur' }],
+  price: [{ required: true, message: '请输入商品价格', trigger: 'blur' }, { pattern: /^\d+(\.\d{1,2})?$/, message: '最多支持2位小数', trigger: 'blur' }],
 }
 
 // 选项数据
