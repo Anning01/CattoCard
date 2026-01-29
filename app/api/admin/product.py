@@ -14,6 +14,7 @@ from app.models.product import (
     ProductIntro,
     ProductTag,
 )
+from app.models.order import OrderItem
 from app.schemas import OrderStatus
 from app.schemas.product import (
     CategoryCreate,
@@ -53,9 +54,12 @@ async def get_tag_suggestions_api():
 
 # ==================== 分类管理 ====================
 @router.get("/categories", response_model=ResponseModel, summary="获取所有分类")
-async def get_categories():
-    logger.info("获取所有分类(管理)")
-    categories = await Category.all().order_by("sort_order")
+async def get_categories(is_active: bool | None = None):
+    logger.info(f"获取所有分类(管理): is_active={is_active}")
+    query = Category.all()
+    if is_active is not None:
+        query = query.filter(is_active=is_active)
+    categories = await query.order_by("sort_order")
     data = [CategoryResponse.model_validate(c) for c in categories]
     return success_response(data=data)
 
@@ -98,6 +102,11 @@ async def update_category(category_id: int, data: CategoryUpdate):
             raise BadRequestException(message="父分类不存在")
         if parent.parent_id:
             raise BadRequestException(message="只支持两级分类")
+
+    # 如果禁用了分类，同时下架该分类下的所有商品
+    if "is_active" in update_data and update_data["is_active"] is False:
+        await Product.filter(category_id=category_id).update(is_active=False)
+        logger.info(f"分类已禁用，自动下架关联商品: category_id={category_id}")
 
     await category.update_from_dict(update_data).save()
     logger.info(f"分类更新成功: id={category_id}")
@@ -411,8 +420,6 @@ async def delete_product(product_id: int):
     if not product:
         raise NotFoundException(message="商品不存在")
     message = "删除成功"
-    # 检查是否有关联订单
-    from app.models.order import OrderItem
 
     # 1️⃣ 是否有关联订单
     has_orders = await OrderItem.filter(product_id=product_id).exists()

@@ -89,6 +89,7 @@ export const useAppStore = defineStore('app', () => {
       if (res.data.site_favicon) siteConfig.site_favicon = res.data.site_favicon
       if (res.data.currency) siteConfig.currency = res.data.currency
       if (res.data.currency_symbol) siteConfig.currency_symbol = res.data.currency_symbol
+      if (res.data.contact_info) siteConfig.contact_info = res.data.contact_info
       configLoaded.value = true
 
       // 更新页面标题和 favicon
