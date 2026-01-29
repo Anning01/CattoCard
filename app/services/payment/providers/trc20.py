@@ -45,8 +45,8 @@ class TRC20Provider(PaymentProvider):
         # 配置参数
         self.wallet_address = config.get("wallet_address", "")
         self.trongrid_api_key = config.get("trongrid_api_key", "")
-        self.scan_interval = config.get("scan_interval", 30)  # 扫描间隔（秒）
-        self.amount_precision = config.get("amount_precision", 4)  # 金额精度（小数位）
+        self.scan_interval = int(config.get("scan_interval", 30))  # 扫描间隔（秒）
+        self.amount_precision = int(config.get("amount_precision", 4))  # 金额精度（小数位）
 
     def is_configured(self) -> bool:
         """检查是否已配置"""
@@ -100,6 +100,7 @@ class TRC20Provider(PaymentProvider):
                 "original_amount": amount,
                 "currency": "USDT",
                 "network": "TRC20",
+                "qr_content": self.wallet_address,
             }
 
             await add_pending_order(order_no, self.provider_id, payment_data)
@@ -109,14 +110,7 @@ class TRC20Provider(PaymentProvider):
 
             return PaymentResult(
                 success=True,
-                payment_data={
-                    "wallet_address": self.wallet_address,
-                    "amount": unique_amount,
-                    "original_amount": amount,
-                    "network": "TRC20",
-                    "currency": "USDT",
-                    "qr_content": self.wallet_address,
-                },
+                payment_data=payment_data,
             )
 
         except Exception as e:

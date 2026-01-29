@@ -517,11 +517,15 @@ async function confirmCancel() {
             <div class="flex justify-center mb-6">
               <div class="p-4 bg-white border-2 border-gray-100 rounded-xl">
                 <QrcodeVue
+                  v-if="qrCodeValue"
                   :key="qrCodeValue"
                   :value="qrCodeValue"
                   :size="200"
                   level="M"
                 />
+                <div v-else class="w-[200px] h-[200px] flex items-center justify-center">
+                  <div class="animate-spin h-8 w-8 border-4 border-primary-500 border-t-transparent rounded-full"></div>
+                </div>
               </div>
             </div>
 
