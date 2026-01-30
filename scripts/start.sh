@@ -18,11 +18,18 @@ log_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
 log_warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# 加载 .env
+# 加载 .env（支持带空格的值）
 if [ -f .env ]; then
-    set -a
-    source .env
-    set +a
+    while IFS='=' read -r key value; do
+        # 跳过注释和空行
+        [[ -z "$key" || "$key" =~ ^# ]] && continue
+        # 去掉值两端的引号
+        value="${value%\"}"
+        value="${value#\"}"
+        value="${value%\'}"
+        value="${value#\'}"
+        export "$key=$value"
+    done < .env
 fi
 
 DOMAIN="${DOMAIN:-localhost}"
