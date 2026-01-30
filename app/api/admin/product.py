@@ -124,7 +124,7 @@ async def delete_category(category_id: int):
         raise BadRequestException(message="请先删除子分类")
 
     # 查询分类下的商品
-    products_qs = Product.filter(category_id=category_id)
+    products_qs = Product.filter(category_id=category_id, category__parent=category)
 
     if await products_qs.exists():
         # 是否存在“仍然上架”的商品
