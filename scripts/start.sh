@@ -36,19 +36,22 @@ DOMAIN="${DOMAIN:-localhost}"
 ENABLE_SSL="${ENABLE_SSL:-false}"
 SSL_EMAIL="${SSL_EMAIL:-}"
 
+# 清理 DOMAIN：去掉协议前缀和尾部斜杠，只保留域名
+DOMAIN=$(echo "$DOMAIN" | sed -E 's|^https?://||; s|/+$||')
+
 # 配置 nginx：根据 DOMAIN 替换 server_name
 setup_nginx() {
     log_info "配置 Nginx (域名: $DOMAIN)"
 
-    # 替换 default.conf 中的 server_name
-    sed -i.bak "s/server_name .*/server_name ${DOMAIN};/" ./nginx/conf.d/default.conf
+    # 替换 default.conf 中的 server_name（使用 | 作为分隔符避免域名中的特殊字符问题）
+    sed -i.bak "s|server_name .*|server_name ${DOMAIN};|" ./nginx/conf.d/default.conf
     rm -f ./nginx/conf.d/default.conf.bak
 
     if [ "$ENABLE_SSL" = "true" ] && [ -f "./nginx/ssl/fullchain.pem" ]; then
         # 启用 SSL 配置
         log_info "检测到 SSL 证书，启用 HTTPS"
         cp ./nginx/conf.d/default_ssl.conf ./nginx/conf.d/ssl.conf
-        sed -i.bak "s/server_name .*/server_name ${DOMAIN};/" ./nginx/conf.d/ssl.conf
+        sed -i.bak "s|server_name .*|server_name ${DOMAIN};|" ./nginx/conf.d/ssl.conf
         rm -f ./nginx/conf.d/ssl.conf.bak
     else
         # 移除 SSL 配置
