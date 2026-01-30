@@ -102,6 +102,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./certbot/www:/var/www/certbot:ro
       - ./uploads:/var/www/uploads:ro
     depends_on:
       - backend

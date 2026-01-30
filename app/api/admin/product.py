@@ -103,10 +103,20 @@ async def update_category(category_id: int, data: CategoryUpdate):
         if parent.parent_id:
             raise BadRequestException(message="只支持两级分类")
 
-    # 如果禁用了分类，同时下架该分类下的所有商品
+    # 如果禁用了分类，同时下架该分类及其子分类下的所有商品
     if "is_active" in update_data and update_data["is_active"] is False:
-        await Product.filter(category_id=category_id).update(is_active=False)
-        logger.info(f"分类已禁用，自动下架关联商品: category_id={category_id}")
+        # 下架当前分类下的商品
+        affected = await Product.filter(category_id=category_id, is_active=True).update(is_active=False)
+        # 禁用子分类并下架子分类下的商品
+        child_ids = await Category.filter(parent_id=category_id).values_list("id", flat=True)
+        child_affected = 0
+        if child_ids:
+            await Category.filter(id__in=child_ids).update(is_active=False)
+            child_affected = await Product.filter(category_id__in=child_ids, is_active=True).update(is_active=False)
+        logger.info(
+            f"分类已禁用，自动下架商品: category_id={category_id}, "
+            f"子分类数={len(child_ids)}, 下架商品数={affected + child_affected}"
+        )
 
     await category.update_from_dict(update_data).save()
     logger.info(f"分类更新成功: id={category_id}")
@@ -124,7 +134,7 @@ async def delete_category(category_id: int):
         raise BadRequestException(message="请先删除子分类")
 
     # 查询分类下的商品
-    products_qs = Product.filter(category_id=category_id, category__parent=category)
+    products_qs = Product.filter(category_id=category_id)
 
     if await products_qs.exists():
         # 是否存在“仍然上架”的商品

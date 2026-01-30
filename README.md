@@ -153,6 +153,13 @@ cp .env.example .env
 编辑 `.env` 文件：
 
 ```env
+# 域名配置（必填）
+DOMAIN=your-domain.com
+
+# 是否启用 SSL（自动申请 Let's Encrypt 证书）
+ENABLE_SSL=true
+SSL_EMAIL=your-email@example.com
+
 # 数据库配置
 POSTGRES_USER=cardstore
 POSTGRES_PASSWORD=your-secure-password  # 修改为强密码
@@ -167,6 +174,21 @@ INIT_ADMIN_PASSWORD=your-admin-password  # 请修改
 ```
 
 #### 2. 启动服务
+
+**推荐方式（使用启动脚本）：**
+
+```bash
+# 使用启动脚本（自动处理 SSL 证书申请）
+./scripts/start.sh start
+
+# 其他命令
+./scripts/start.sh stop      # 停止服务
+./scripts/start.sh restart   # 重启服务
+./scripts/start.sh renew-ssl # 更新 SSL 证书
+./scripts/start.sh logs      # 查看日志
+```
+
+**手动方式：**
 
 ```bash
 # 构建并启动所有服务
@@ -261,25 +283,41 @@ docker compose exec db pg_dump -U cardstore cardstore > backup.sql
 
 ### SSL 配置
 
-将 SSL 证书放入 `nginx/ssl/` 目录，然后修改 `nginx/conf.d/default.conf`：
+#### 自动 SSL（Let's Encrypt，推荐）
 
-```nginx
-server {
-    listen 443 ssl;
-    server_name your-domain.com;
+在 `.env` 中配置域名并启用 SSL：
 
-    ssl_certificate /etc/nginx/ssl/cert.pem;
-    ssl_certificate_key /etc/nginx/ssl/key.pem;
-
-    # ... 其他配置
-}
-
-server {
-    listen 80;
-    server_name your-domain.com;
-    return 301 https://$server_name$request_uri;
-}
+```env
+DOMAIN=your-domain.com
+ENABLE_SSL=true
+SSL_EMAIL=your-email@example.com
 ```
+
+使用启动脚本自动完成证书申请：
+
+```bash
+./scripts/start.sh start
+```
+
+脚本会自动：
+1. 检查 `nginx/ssl/live/{DOMAIN}/` 目录下是否已存在有效证书
+2. 如果证书不存在或即将过期（30天内），自动使用 certbot 申请/更新
+3. 生成包含 HTTPS 的 Nginx 配置
+4. 启动所有服务
+
+**证书续期：**
+
+```bash
+# 手动续期
+./scripts/start.sh renew-ssl
+
+# 添加定时任务（推荐，每天凌晨2点检查）
+echo "0 2 * * * cd /path/to/CattoCard && ./scripts/start.sh renew-ssl" | crontab -
+```
+
+#### 手动 SSL
+
+将证书文件放入 `nginx/ssl/` 目录，修改 `nginx/conf.d/default.conf` 添加 HTTPS server 配置。
 
 ## 配置说明
 
@@ -287,6 +325,9 @@ server {
 
 | 变量名 | 说明 | 默认值 | 必填 |
 |--------|------|--------|------|
+| `DOMAIN` | 站点域名 | `localhost` | 是 |
+| `ENABLE_SSL` | 是否启用 SSL | `false` | 否 |
+| `SSL_EMAIL` | SSL 证书通知邮箱 | - | SSL 启用时必填 |
 | `SECRET_KEY` | JWT 密钥 | - | **是** |
 | `DATABASE_URL` | 数据库连接（本地开发） | `sqlite://./data/cardstore.db` | 否 |
 | `POSTGRES_USER` | PostgreSQL 用户（Docker） | `cardstore` | 是 |
@@ -295,6 +336,8 @@ server {
 | `REDIS_URL` | Redis 连接（本地开发） | - | 否 |
 | `DEBUG` | 调试模式 | `false` | 否 |
 | `UPLOAD_DIR` | 上传目录 | `uploads` | 否 |
+| `HTTP_PORT` | HTTP 端口 | `80` | 否 |
+| `HTTPS_PORT` | HTTPS 端口 | `443` | 否 |
 
 ### 后台管理配置
 
@@ -500,6 +543,13 @@ cardstore/
 ├── web/                      # 前台界面（Vue 3 + Tailwind）
 ├── admin/                    # 后台管理（Vue 3 + Element Plus）
 ├── nginx/                    # Nginx 配置
+│   ├── conf.d/               # 站点配置
+│   ├── templates/            # 配置模板
+│   └── ssl/                  # SSL 证书目录
+├── scripts/                  # 管理脚本
+│   ├── start.sh              # 启动脚本（含 SSL 自动化）
+│   └── docker-entrypoint.sh  # Docker 入口脚本
+├── certbot/                  # Certbot 验证目录
 ├── migrations/               # 数据库迁移文件
 ├── uploads/                  # 上传文件存储
 ├── logs/                     # 日志文件
