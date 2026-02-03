@@ -70,20 +70,20 @@ function goToBanner(banner: Banner) {
     <!-- 弹窗公告 -->
     <Transition name="fade">
       <div v-if="showPopup && popupAnnouncement" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @mousedown.self="closePopup">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full animate-scale-in overflow-hidden">
-          <div class="flex items-center justify-between px-6 py-4 border-b">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full animate-scale-in overflow-hidden">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center gap-2">
               <MegaphoneIcon class="w-5 h-5 text-primary-500" />
-              <h3 class="font-semibold text-gray-900">{{ popupAnnouncement.title }}</h3>
+              <h3 class="font-semibold text-gray-900 dark:text-gray-100">{{ popupAnnouncement.title }}</h3>
             </div>
-            <button class="p-1 hover:bg-gray-100 rounded-lg" @click="closePopup">
-              <XMarkIcon class="w-5 h-5 text-gray-400" />
+            <button class="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" @click="closePopup">
+              <XMarkIcon class="w-5 h-5 text-gray-400 dark:text-gray-500" />
             </button>
           </div>
           <div class="px-6 py-4 max-h-[60vh] overflow-y-auto">
-            <div class="prose prose-sm" v-html="popupAnnouncement.content" />
+            <div class="prose prose-sm dark:prose-invert text-gray-700 dark:text-gray-300" v-html="popupAnnouncement.content" />
           </div>
-          <div class="px-6 py-4 border-t bg-gray-50">
+          <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
             <button class="btn-primary w-full" @click="closePopup">我知道了</button>
           </div>
         </div>
