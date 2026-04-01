@@ -29,6 +29,14 @@
   <a href="#技术栈">技术栈</a>
 </p>
 
+## 在线预览
+- 前台首页：http://catto.xiazq.com/
+- 后台管理：http://catto.xiazq.com/admin
+
+## 测试账号
+- 用户名：`admin`
+- 密码：`123456`
+
 ---
 
 ## 介绍
